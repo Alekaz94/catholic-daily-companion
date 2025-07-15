@@ -3,6 +3,7 @@ package com.alexandros.dailycompanion.Service;
 import com.alexandros.dailycompanion.DTO.UserDto;
 import com.alexandros.dailycompanion.DTO.UserRequest;
 import com.alexandros.dailycompanion.DTO.UserUpdateRequest;
+import com.alexandros.dailycompanion.Enum.Roles;
 import com.alexandros.dailycompanion.Mapper.UserDtoMapper;
 import com.alexandros.dailycompanion.Model.User;
 import com.alexandros.dailycompanion.Repository.UserRepository;
@@ -47,6 +48,7 @@ public class UserService {
         user.setPassword(userRequest.password());
         user.setCreatedAt(LocalDate.now());
         user.setUpdatedAt(LocalDate.now());
+        user.setRole(Roles.USER);
         userRepository.save(user);
         return UserDtoMapper.toUserDto(user);
     }

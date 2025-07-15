@@ -1,5 +1,6 @@
 package com.alexandros.dailycompanion.Model;
 
+import com.alexandros.dailycompanion.Enum.Roles;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,6 +30,8 @@ public class User {
     private String password;
     private LocalDate createdAt;
     private LocalDate updatedAt;
+    @Enumerated(EnumType.STRING)
+    private Roles role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<JournalEntry> journalEntries = new ArrayList<>();
