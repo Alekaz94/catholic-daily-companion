@@ -4,6 +4,7 @@ import com.alexandros.dailycompanion.DTO.SaintDto;
 import com.alexandros.dailycompanion.DTO.SaintRequest;
 import com.alexandros.dailycompanion.Service.SaintService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class SaintController {
     private final SaintService saintService;
 
+    @Autowired
     public SaintController(SaintService saintService) {
         this.saintService = saintService;
     }
@@ -40,5 +42,4 @@ public class SaintController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saint);
     }
 
-    // Updating or deleting saints is intentionally not supported at the moment.
 }

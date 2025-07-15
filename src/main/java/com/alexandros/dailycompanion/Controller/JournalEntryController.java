@@ -19,6 +19,7 @@ import java.util.UUID;
 @Validated
 public class JournalEntryController {
     private final JournalEntryService journalEntryService;
+
     @Autowired
     public JournalEntryController(JournalEntryService journalEntryService) {
         this.journalEntryService = journalEntryService;

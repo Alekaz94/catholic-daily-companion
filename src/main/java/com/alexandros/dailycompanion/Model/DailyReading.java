@@ -21,7 +21,7 @@ public class DailyReading {
     @JdbcTypeCode(SqlTypes.UUID)
     @Column(updatable = false, nullable = false)
     private UUID id;
-    private LocalDate date;
+    private LocalDate createdAt;
     @Column(columnDefinition = "TEXT")
     private String firstReading;
     @Column(columnDefinition = "TEXT")

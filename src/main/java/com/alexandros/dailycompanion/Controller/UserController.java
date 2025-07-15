@@ -5,6 +5,7 @@ import com.alexandros.dailycompanion.DTO.UserRequest;
 import com.alexandros.dailycompanion.DTO.UserUpdateRequest;
 import com.alexandros.dailycompanion.Service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -19,6 +20,7 @@ import java.util.UUID;
 public class UserController {
     private final UserService userService;
 
+    @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
     }

@@ -6,6 +6,7 @@ import com.alexandros.dailycompanion.Mapper.SaintDtoMapper;
 import com.alexandros.dailycompanion.Model.Saint;
 import com.alexandros.dailycompanion.Repository.SaintRepository;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.UUID;
 public class SaintService {
     private final SaintRepository saintRepository;
 
+    @Autowired
     public SaintService(SaintRepository saintRepository) {
         this.saintRepository = saintRepository;
     }
