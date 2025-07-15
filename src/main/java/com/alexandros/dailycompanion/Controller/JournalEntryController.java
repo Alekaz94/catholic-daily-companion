@@ -3,20 +3,20 @@ package com.alexandros.dailycompanion.Controller;
 import com.alexandros.dailycompanion.DTO.JournalEntryDto;
 import com.alexandros.dailycompanion.DTO.JournalEntryRequest;
 import com.alexandros.dailycompanion.DTO.JournalEntryUpdateRequest;
-import com.alexandros.dailycompanion.Model.JournalEntry;
 import com.alexandros.dailycompanion.Service.JournalEntryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/journal-entry")
+@Validated
 public class JournalEntryController {
     private final JournalEntryService journalEntryService;
     @Autowired

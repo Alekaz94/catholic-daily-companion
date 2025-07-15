@@ -3,12 +3,11 @@ package com.alexandros.dailycompanion.Controller;
 import com.alexandros.dailycompanion.DTO.UserDto;
 import com.alexandros.dailycompanion.DTO.UserRequest;
 import com.alexandros.dailycompanion.DTO.UserUpdateRequest;
-import com.alexandros.dailycompanion.Mapper.UserDtoMapper;
-import com.alexandros.dailycompanion.Model.User;
 import com.alexandros.dailycompanion.Service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +15,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/user")
+@Validated
 public class UserController {
     private final UserService userService;
 
