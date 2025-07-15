@@ -2,6 +2,7 @@ package com.alexandros.dailycompanion.Controller;
 
 import com.alexandros.dailycompanion.DTO.UserDto;
 import com.alexandros.dailycompanion.DTO.UserRequest;
+import com.alexandros.dailycompanion.DTO.UserUpdateRequest;
 import com.alexandros.dailycompanion.Mapper.UserDtoMapper;
 import com.alexandros.dailycompanion.Model.User;
 import com.alexandros.dailycompanion.Service.UserService;
@@ -38,5 +39,18 @@ public class UserController {
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserRequest userRequest) {
         UserDto user = userService.createUser(userRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    }
+
+    @PutMapping("/{userId}")
+    public ResponseEntity<UserDto> updateUser(@PathVariable UUID userId,
+                                              @Valid @RequestBody UserUpdateRequest userUpdateRequest) {
+        UserDto user = userService.updateUserPassword(userId, userUpdateRequest);
+        return ResponseEntity.ok(user);
+    }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID userId) {
+        userService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
     }
 }

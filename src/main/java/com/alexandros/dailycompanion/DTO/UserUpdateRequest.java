@@ -1,4 +1,7 @@
 package com.alexandros.dailycompanion.DTO;
 
-public record UpdateUserRequest() {
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+public record UserUpdateRequest(@NotNull @Size(min = 8, message = "Password must be atleast 8 characters long") String password) {
 }
