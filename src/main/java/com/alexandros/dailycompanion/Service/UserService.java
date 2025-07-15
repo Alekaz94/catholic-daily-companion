@@ -1,15 +1,23 @@
 package com.alexandros.dailycompanion.Service;
 
-import com.alexandros.dailycompanion.DTO.UserDto;
-import com.alexandros.dailycompanion.DTO.UserRequest;
-import com.alexandros.dailycompanion.DTO.UserUpdateRequest;
+import com.alexandros.dailycompanion.DTO.*;
 import com.alexandros.dailycompanion.Enum.Roles;
 import com.alexandros.dailycompanion.Mapper.UserDtoMapper;
 import com.alexandros.dailycompanion.Model.User;
 import com.alexandros.dailycompanion.Repository.UserRepository;
+import com.alexandros.dailycompanion.Security.JwtUtil;
+import com.alexandros.dailycompanion.Security.PasswordUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,10 +27,15 @@ import java.util.UUID;
 
 @Service
 public class UserService {
+
+    private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil) {
+        this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     public List<UserDto> getAllUsers() {
@@ -45,7 +58,7 @@ public class UserService {
         user.setFirstName(userRequest.firstName());
         user.setLastName(userRequest.lastName());
         user.setEmail(userRequest.email());
-        user.setPassword(userRequest.password());
+        user.setPassword(PasswordUtil.hashPassword(userRequest.password()));
         user.setCreatedAt(LocalDate.now());
         user.setUpdatedAt(LocalDate.now());
         user.setRole(Roles.USER);
@@ -66,8 +79,42 @@ public class UserService {
         userRepository.deleteById(user.getId());
     }
 
+    public ResponseEntity<?> login(@Valid LoginRequest loginRequest) {
+        try{
+            Authentication auth = authenticationManager
+                    .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password()));
+            UserDetails userDetails = (UserDetails) auth.getPrincipal();
+            String token = jwtUtil.generateToken(userDetails.getUsername());
+            User user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new UsernameNotFoundException("No user found!"));
+            UserDto userDto = UserDtoMapper.toUserDto(user);
+
+            return ResponseEntity.ok(new LoginResponse(userDto, token));
+        } catch(AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials!");
+        }
+    }
+
+    public UserDto signUp(@Valid UserRequest userRequest) {
+        if (userRepository.findByEmail(userRequest.email()).isPresent()) {
+            throw new IllegalArgumentException("Email already registered!");
+        }
+        User user = new User();
+        user.setFirstName(userRequest.firstName());
+        user.setLastName(userRequest.lastName());
+        user.setEmail(userRequest.email());
+        user.setPassword(PasswordUtil.hashPassword(userRequest.password()));
+        user.setCreatedAt(LocalDate.now());
+        user.setUpdatedAt(LocalDate.now());
+        user.setRole(Roles.USER);
+
+        userRepository.save(user);
+        return UserDtoMapper.toUserDto(user);
+    }
+
     private User getUserByIdOrThrow(UUID id) {
         return userRepository.findById(id).orElseThrow(() ->
                 new EntityNotFoundException(String.format("Could not find user with id: %s", id)));
     }
+
 }

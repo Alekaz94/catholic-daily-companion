@@ -10,3 +10,7 @@ spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 spring.jpa.properties.hibernate.format_sql=true
+
+# JWT settings
+jwt.secret=your_random_base64_string_here
+jwt.expiration=3600 # in seconds
