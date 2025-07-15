@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +45,8 @@ public class UserService {
         user.setLastName(userRequest.lastName());
         user.setEmail(userRequest.email());
         user.setPassword(userRequest.password());
+        user.setCreatedAt(LocalDate.now());
+        user.setUpdatedAt(LocalDate.now());
         userRepository.save(user);
         return UserDtoMapper.toUserDto(user);
     }
@@ -51,6 +54,7 @@ public class UserService {
     public UserDto updateUserPassword(UUID userId, @Valid UserUpdateRequest userUpdateRequest) {
         User user = getUserByIdOrThrow(userId);
         user.setPassword(userUpdateRequest.password());
+        user.setUpdatedAt(LocalDate.now());
         userRepository.save(user);
         return UserDtoMapper.toUserDto(user);
     }
