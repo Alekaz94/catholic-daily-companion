@@ -21,9 +21,11 @@ public class JournalEntry {
     @JdbcTypeCode(SqlTypes.UUID)
     @Column(updatable = false, nullable = false)
     private UUID id;
-    private LocalDate date;
+    private LocalDate createdAt;
+    private LocalDate updatedAt;
     @Column(columnDefinition = "TEXT")
     private String content;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
