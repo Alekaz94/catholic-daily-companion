@@ -14,7 +14,6 @@ public class DailyReadingDtoMapper {
         return new DailyReadingDto(
                 dailyReading.getId(),
                 dailyReading.getCreatedAt(),
-                dailyReading.getUpdatedAt(),
                 dailyReading.getFirstReading(),
                 dailyReading.getSecondReading(),
                 dailyReading.getPsalm(),

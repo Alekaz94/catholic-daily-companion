@@ -10,13 +10,16 @@ import com.alexandros.dailycompanion.Security.PasswordUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -26,13 +29,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     @Autowired
-    public UserService(AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil) {
+    public UserService(@Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
@@ -114,7 +117,17 @@ public class UserService {
 
     private User getUserByIdOrThrow(UUID id) {
         return userRepository.findById(id).orElseThrow(() ->
-                new EntityNotFoundException(String.format("Could not find user with id: %s", id)));
+                new UsernameNotFoundException("User not found with id: " + id));
     }
 
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        return userRepository.findByEmail(email)
+                .map(user -> new org.springframework.security.core.userdetails.User(
+                        user.getEmail(),
+                        user.getPassword(),
+                        List.of(new SimpleGrantedAuthority(user.getRole().toString()))
+                ))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    }
 }

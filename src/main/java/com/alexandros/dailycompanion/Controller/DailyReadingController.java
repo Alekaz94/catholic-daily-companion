@@ -31,7 +31,7 @@ public class DailyReadingController {
         return ResponseEntity.ok(readings);
     }
 
-    @GetMapping("/${readingId}")
+    @GetMapping("/{readingId}")
     public ResponseEntity<DailyReadingDto> getDailyReading(@PathVariable UUID readingId) {
         DailyReadingDto reading = dailyReadingService.getDailyReading(readingId);
         return ResponseEntity.ok(reading);
