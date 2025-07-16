@@ -63,7 +63,7 @@ public class JournalEntryService {
                                               @Valid JournalEntryUpdateRequest entryUpdateRequest,
                                               String email) throws AccessDeniedException {
         JournalEntry entry = getJournalEntryById(entryId);
-        if(entry.getUser().getEmail().equals(email)) {
+        if(!entry.getUser().getEmail().equals(email)) {
             throw new AccessDeniedException("You are not authorized to access this entry!");
         }
 
@@ -76,7 +76,7 @@ public class JournalEntryService {
 
     public void deleteJournalEntry(UUID entryId, String email) throws AccessDeniedException {
         JournalEntry entry = getJournalEntryById(entryId);
-        if(entry.getUser().getEmail().equals(email)) {
+        if(!entry.getUser().getEmail().equals(email)) {
             throw new AccessDeniedException("You are not authorized to access this entry!");
         }
         journalEntryRepository.deleteById(entry.getId());
