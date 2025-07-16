@@ -17,7 +17,10 @@ public class SaintDtoMapper {
                 saint.getBirthYear(),
                 saint.getDeathYear(),
                 saint.getFeastDay(),
-                saint.getBiography()
+                saint.getBiography(),
+                saint.getPatronage(),
+                saint.getCanonizationYear(),
+                saint.getImageUrl()
         );
     }
 

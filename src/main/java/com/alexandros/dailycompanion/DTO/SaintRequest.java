@@ -9,5 +9,8 @@ public record SaintRequest(@NotNull @Size(min = 1) String name,
                            @NotNull Integer birthYear,
                            @NotNull Integer deathYear,
                            @NotNull LocalDate feastDay,
-                           @NotNull @Size(min = 10) String biography) {
+                           @NotNull @Size(min = 10) String biography,
+                           @NotNull String patronage,
+                           @NotNull Integer canonizationYear,
+                           String imageUrl) {
 }

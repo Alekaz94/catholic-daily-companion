@@ -22,9 +22,13 @@ public class Saint {
     @Column(updatable = false, nullable = false)
     private UUID id;
     private String name;
-    private int birthYear;
-    private int deathYear;
+    private Integer birthYear;
+    private Integer deathYear;
     private LocalDate feastDay;
     @Column(columnDefinition = "TEXT")
     private String biography;
+
+    private String patronage;
+    private Integer canonizationYear;
+    private String imageUrl;
 }

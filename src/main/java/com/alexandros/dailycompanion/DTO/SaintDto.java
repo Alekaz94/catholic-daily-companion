@@ -8,5 +8,8 @@ public record SaintDto(UUID id,
                        Integer birthYear,
                        Integer deathYear,
                        LocalDate feastDay,
-                       String biography) {
+                       String biography,
+                       String patronage,
+                       Integer canonizationYear,
+                       String imageUrl) {
 }

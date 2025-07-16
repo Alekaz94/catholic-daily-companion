@@ -39,10 +39,13 @@ public class SaintService {
 
         Saint saint = new Saint();
         saint.setName(saintRequest.name());
-        saint.setBirthYear(saintRequest.birthYear());
+        saint.setBirthYear(saint.getBirthYear());
         saint.setDeathYear(saintRequest.deathYear());
         saint.setFeastDay(feastDay);
         saint.setBiography(saintRequest.biography());
+        saint.setPatronage(saintRequest.patronage());
+        saint.setCanonizationYear(saint.getCanonizationYear());
+        saint.setImageUrl(saintRequest.imageUrl());
         saintRepository.save(saint);
         return SaintDtoMapper.toSaintDto(saint);
     }
