@@ -28,14 +28,14 @@ public class JournalEntryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<JournalEntryDto>> getAllJournalEntries(Principal principal) {
-        List<JournalEntryDto> entries = journalEntryService.getAllJournalEntries(principal.getName());
+    public ResponseEntity<List<JournalEntryDto>> getAllJournalEntries() {
+        List<JournalEntryDto> entries = journalEntryService.getAllJournalEntriesForUser();
         return ResponseEntity.ok(entries);
     }
 
     @GetMapping("/{entryId}")
-    public ResponseEntity<JournalEntryDto> getEntryById(@PathVariable UUID entryId, Principal principal) throws AccessDeniedException {
-        JournalEntryDto entry = journalEntryService.getEntryById(entryId, principal.getName());
+    public ResponseEntity<JournalEntryDto> getEntryById(@PathVariable UUID entryId) throws AccessDeniedException {
+        JournalEntryDto entry = journalEntryService.getEntryById(entryId);
         return ResponseEntity.ok(entry);
     }
 
@@ -48,15 +48,14 @@ public class JournalEntryController {
 
     @PutMapping("/{entryId}")
     public ResponseEntity<JournalEntryDto> updateJournalEntry(@PathVariable UUID entryId,
-                                                          @Valid @RequestBody JournalEntryUpdateRequest entryUpdateRequest,
-                                                              Principal principal) throws AccessDeniedException {
-        JournalEntryDto entry = journalEntryService.updateJournalEntry(entryId, entryUpdateRequest, principal.getName());
+                                                          @Valid @RequestBody JournalEntryUpdateRequest entryUpdateRequest) throws AccessDeniedException {
+        JournalEntryDto entry = journalEntryService.updateJournalEntry(entryId, entryUpdateRequest);
         return ResponseEntity.ok(entry);
     }
 
     @DeleteMapping("/{entryId}")
-    public ResponseEntity<Void> deleteJournalEntry(@PathVariable UUID entryId, Principal principal) throws AccessDeniedException {
-        journalEntryService.deleteJournalEntry(entryId, principal.getName());
+    public ResponseEntity<Void> deleteJournalEntry(@PathVariable UUID entryId) throws AccessDeniedException {
+        journalEntryService.deleteJournalEntry(entryId);
         return ResponseEntity.noContent().build();
     }
 }
