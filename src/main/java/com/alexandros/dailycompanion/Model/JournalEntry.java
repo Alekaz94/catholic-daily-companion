@@ -23,6 +23,7 @@ public class JournalEntry {
     private UUID id;
     private LocalDate createdAt;
     private LocalDate updatedAt;
+    private String title;
     @Column(columnDefinition = "TEXT")
     private String content;
 

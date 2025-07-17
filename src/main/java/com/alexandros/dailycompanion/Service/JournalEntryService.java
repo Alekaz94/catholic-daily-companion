@@ -3,6 +3,7 @@ package com.alexandros.dailycompanion.Service;
 import com.alexandros.dailycompanion.DTO.JournalEntryDto;
 import com.alexandros.dailycompanion.DTO.JournalEntryRequest;
 import com.alexandros.dailycompanion.DTO.JournalEntryUpdateRequest;
+import com.alexandros.dailycompanion.Enum.Roles;
 import com.alexandros.dailycompanion.Mapper.JournalEntryDtoMapper;
 import com.alexandros.dailycompanion.Model.JournalEntry;
 import com.alexandros.dailycompanion.Model.User;
@@ -11,6 +12,8 @@ import com.alexandros.dailycompanion.Repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -30,20 +33,22 @@ public class JournalEntryService {
         this.userRepository = userRepository;
     }
 
-    public List<JournalEntryDto> getAllJournalEntries(String email) {
+    public List<JournalEntryDto> getAllJournalEntriesForUser() {
+        List<JournalEntry> entries;
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = getUserByEmail(email);
-        List<JournalEntry> entries = journalEntryRepository.findByUser(user);
+
+        if(user.getRole().equals(Roles.ADMIN)) {
+            entries = journalEntryRepository.findAll();
+        } else  {
+            entries = journalEntryRepository.findAllByUserId(user.getId());
+        }
         return JournalEntryDtoMapper.toJournalEntryDto(entries);
     }
 
-    public JournalEntryDto getEntryById(UUID entryId, String email) throws AccessDeniedException {
-        JournalEntry entry = getJournalEntryById(entryId);
-        if(!entry.getUser().getEmail().equals(email)) {
-            throw new AccessDeniedException("You are not authorized to access this entry!");
-        }
-
+    public JournalEntryDto getEntryById(UUID entryId) throws AccessDeniedException {
+        JournalEntry entry = getJournalEntryForCurrentUser(entryId);
         return JournalEntryDtoMapper.toJournalEntryDto(entry);
-
     }
 
     public JournalEntryDto createJournalEntry(@Valid JournalEntryRequest entryRequest, String email) {
@@ -52,6 +57,7 @@ public class JournalEntryService {
 
         entry.setCreatedAt(LocalDate.now());
         entry.setUpdatedAt(LocalDate.now());
+        entry.setTitle(entryRequest.title());
         entry.setContent(entryRequest.content());
         entry.setUser(user);
         journalEntryRepository.save(entry);
@@ -60,31 +66,45 @@ public class JournalEntryService {
     }
 
     public JournalEntryDto updateJournalEntry(UUID entryId,
-                                              @Valid JournalEntryUpdateRequest entryUpdateRequest,
-                                              String email) throws AccessDeniedException {
-        JournalEntry entry = getJournalEntryById(entryId);
-        if(!entry.getUser().getEmail().equals(email)) {
-            throw new AccessDeniedException("You are not authorized to access this entry!");
+                                              @Valid JournalEntryUpdateRequest entryUpdateRequest) throws AccessDeniedException {
+        JournalEntry entry = getJournalEntryForCurrentUser(entryId);
+        if(entryUpdateRequest.title() != null && !entryUpdateRequest.title().isEmpty() ) {
+            entry.setTitle(entryUpdateRequest.title());
         }
-
         entry.setContent(entryUpdateRequest.content());
         entry.setUpdatedAt(LocalDate.now());
         journalEntryRepository.save(entry);
-
         return JournalEntryDtoMapper.toJournalEntryDto(entry);
     }
 
-    public void deleteJournalEntry(UUID entryId, String email) throws AccessDeniedException {
-        JournalEntry entry = getJournalEntryById(entryId);
-        if(!entry.getUser().getEmail().equals(email)) {
-            throw new AccessDeniedException("You are not authorized to access this entry!");
-        }
+    public void deleteJournalEntry(UUID entryId) throws AccessDeniedException {
+        JournalEntry entry = getJournalEntryForCurrentUser(entryId);
         journalEntryRepository.deleteById(entry.getId());
     }
 
-    public JournalEntry getJournalEntryById(UUID id) {
+    private JournalEntry getJournalEntryForCurrentUser(UUID entryId) throws AccessDeniedException {
+        JournalEntry entry = getJournalEntryOrThrow(entryId);
+        User currentUser = getAuthenticatedUser();
+        if(!isOwnerOrAdmin(entry, currentUser)) {
+            throw new AccessDeniedException("You are not authorized to access this journal entry!");
+        }
+        return entry;
+    }
+
+    private JournalEntry getJournalEntryOrThrow(UUID id) {
         return journalEntryRepository.findById(id).orElseThrow(() ->
                 new EntityNotFoundException(String.format("Could not find journal entry with id: %s", id)));
+    }
+
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return userRepository.findByEmail(email).orElseThrow(() ->
+                new UsernameNotFoundException("Authenticated user not found!"));
+    }
+
+    private boolean isOwnerOrAdmin(JournalEntry entry, User user) {
+        return user.getRole().equals(Roles.ADMIN) || entry.getUser().getId().equals(user.getId());
     }
 
     public User getUserByEmail(String email) {

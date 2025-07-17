@@ -6,5 +6,6 @@ import java.util.UUID;
 public record JournalEntryDto(UUID id,
                               LocalDate date,
                               LocalDate updatedAt,
+                              String title,
                               String content) {
 }

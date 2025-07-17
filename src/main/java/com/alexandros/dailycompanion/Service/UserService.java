@@ -18,11 +18,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -46,7 +48,12 @@ public class UserService implements UserDetailsService {
         return UserDtoMapper.toUserDto(users);
     }
 
-    public UserDto getUser(UUID userId) {
+    public UserDto getUser(UUID userId) throws AccessDeniedException {
+        User currentUser = getAuthenticatedUser();
+        if(!currentUser.getRole().equals(Roles.ADMIN) && !currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException("You are not allowed to this user's information");
+        }
+
         User user = getUserByIdOrThrow(userId);
         return UserDtoMapper.toUserDto(user);
     }
@@ -69,9 +76,14 @@ public class UserService implements UserDetailsService {
         return UserDtoMapper.toUserDto(user);
     }
 
-    public UserDto updateUserPassword(UUID userId, @Valid UserUpdateRequest userUpdateRequest) {
+    public UserDto updateUserPassword(UUID userId, @Valid UserUpdateRequest userUpdateRequest) throws AccessDeniedException {
+        User currentUser = getAuthenticatedUser();
+        if(!currentUser.getRole().equals(Roles.ADMIN) && !currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException("You are not allowed to this user's information");
+        }
+
         User user = getUserByIdOrThrow(userId);
-        user.setPassword(userUpdateRequest.password());
+        user.setPassword(PasswordUtil.hashPassword(userUpdateRequest.password()));
         user.setUpdatedAt(LocalDate.now());
         userRepository.save(user);
         return UserDtoMapper.toUserDto(user);
@@ -115,9 +127,16 @@ public class UserService implements UserDetailsService {
         return UserDtoMapper.toUserDto(user);
     }
 
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        return userRepository.findByEmail(email).orElseThrow(() ->
+                new UsernameNotFoundException("Authenticated user not found!"));
+    }
+
     private User getUserByIdOrThrow(UUID id) {
         return userRepository.findById(id).orElseThrow(() ->
-                new UsernameNotFoundException("User not found with id: " + id));
+                new UsernameNotFoundException("Could not find user!"));
     }
 
     @Override

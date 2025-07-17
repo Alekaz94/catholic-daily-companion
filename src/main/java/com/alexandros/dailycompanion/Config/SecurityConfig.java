@@ -39,8 +39,11 @@ public class SecurityConfig {
                                 .requestMatchers("/api/v1/saint/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                                 .requestMatchers("/api/v1/daily-reading/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                                 .requestMatchers("/api/v1/journal-entry/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                                .requestMatchers(HttpMethod.GET, "/api/v1/user").hasAuthority("ROLE_ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/user/*").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
-                                .requestMatchers("/api/v1/user/**").hasAuthority("ROLE_ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/v1/user/*").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                                .requestMatchers(HttpMethod.DELETE, "/api/v1/user/*").hasAuthority("ROLE_ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/v1/user").hasAuthority("ROLE_ADMIN")
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessions ->

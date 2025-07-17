@@ -16,6 +16,7 @@ public class JournalEntryDtoMapper {
                 journalEntry.getId(),
                 journalEntry.getCreatedAt(),
                 journalEntry.getUpdatedAt(),
+                journalEntry.getTitle(),
                 journalEntry.getContent()
         );
     }

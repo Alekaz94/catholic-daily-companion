@@ -10,5 +10,5 @@ import java.util.UUID;
 
 @Repository
 public interface JournalEntryRepository extends JpaRepository<JournalEntry, UUID> {
-    List<JournalEntry> findByUser(User user);
+    List<JournalEntry> findAllByUserId(UUID id);
 }

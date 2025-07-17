@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,7 +33,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserDto> getUser(@PathVariable UUID userId) {
+    public ResponseEntity<UserDto> getUser(@PathVariable UUID userId) throws AccessDeniedException {
         UserDto user = userService.getUser(userId);
         return ResponseEntity.ok(user);
     }
@@ -45,7 +46,7 @@ public class UserController {
 
     @PutMapping("/{userId}")
     public ResponseEntity<UserDto> updateUser(@PathVariable UUID userId,
-                                              @Valid @RequestBody UserUpdateRequest userUpdateRequest) {
+                                              @Valid @RequestBody UserUpdateRequest userUpdateRequest) throws AccessDeniedException {
         UserDto user = userService.updateUserPassword(userId, userUpdateRequest);
         return ResponseEntity.ok(user);
     }
