@@ -93,7 +93,7 @@ public class JournalEntryService {
 
     private JournalEntry getJournalEntryOrThrow(UUID id) {
         return journalEntryRepository.findById(id).orElseThrow(() ->
-                new EntityNotFoundException(String.format("Could not find journal entry with id: %s", id)));
+                new EntityNotFoundException("Could not find journal entry!"));
     }
 
     private User getAuthenticatedUser() {
