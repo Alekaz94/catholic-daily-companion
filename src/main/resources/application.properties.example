@@ -1,11 +1,11 @@
 spring.application.name=Catholic Daily Companion
 
-# Postgres connection - update these for your local connection
-spring.datasource.url=jdbc:postgresql://localhost:5432/catholic_daily_companion
+# PostgreSQL DB
+spring.datasource.url=jdbc:postgresql://localhost:5432/your-database
 spring.datasource.username=your_username
 spring.datasource.password=your_password
 
-# Hibernate settings
+# JPA / Hibernate settings
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
@@ -14,3 +14,7 @@ spring.jpa.properties.hibernate.format_sql=true
 # JWT settings
 jwt.secret=your_random_base64_string_here
 jwt.expiration=3600 # in seconds
+
+# Admin account for CommandLineRunner
+admin.default.email=your-email@example.com
+admin.default.password=your-secure-password
