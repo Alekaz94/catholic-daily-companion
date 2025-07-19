@@ -19,6 +19,7 @@ import org.springframework.core.annotation.Order;
 
 import java.time.LocalDate;
 import java.time.MonthDay;
+import java.util.Optional;
 
 @SpringBootApplication
 public class CatholicDailyCompanionApplication {
@@ -33,13 +34,18 @@ public class CatholicDailyCompanionApplication {
 								@Value("${admin.default.email}") String adminEmail,
 								@Value("${admin.default.password:changeMe123}") String adminPassword) {
 		return args -> {
-			User adminUser = new User();
-			adminUser.setFirstName("Admin");
-			adminUser.setLastName("User");
-			adminUser.setEmail(adminEmail);
-			adminUser.setPassword(PasswordUtil.hashPassword(adminPassword));
-			adminUser.setRole(Roles.ADMIN);
-			userRepository.save(adminUser);
+			if (userRepository.findByEmail(adminEmail).isEmpty()) {
+				User adminUser = new User();
+				adminUser.setFirstName("Admin");
+				adminUser.setLastName("User");
+				adminUser.setEmail(adminEmail);
+				adminUser.setPassword(PasswordUtil.hashPassword(adminPassword));
+				adminUser.setRole(Roles.ADMIN);
+				userRepository.save(adminUser);
+				System.out.println("Admin user created: " + adminEmail);
+			} else {
+				System.out.println("Admin user already exists: " + adminEmail);
+			}
 		};
 	}
 

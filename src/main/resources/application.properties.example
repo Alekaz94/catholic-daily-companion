@@ -18,3 +18,5 @@ jwt.expiration=3600 # in seconds
 # Admin account for CommandLineRunner
 admin.default.email=your-email@example.com
 admin.default.password=your-secure-password
+
+app.cors.allowed-origins=http://localhost:8080
