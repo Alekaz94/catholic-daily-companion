@@ -66,14 +66,23 @@ public class JournalEntryService {
     }
 
     public JournalEntryDto updateJournalEntry(UUID entryId,
-                                              @Valid JournalEntryUpdateRequest entryUpdateRequest) throws AccessDeniedException {
+                                              JournalEntryUpdateRequest entryUpdateRequest) throws AccessDeniedException {
         JournalEntry entry = getJournalEntryForCurrentUser(entryId);
-        if(entryUpdateRequest.title() != null && !entryUpdateRequest.title().isEmpty() ) {
+        boolean updated = false;
+
+        if(entryUpdateRequest.title() != null && !entryUpdateRequest.title().isEmpty()) {
             entry.setTitle(entryUpdateRequest.title());
+            updated = true;
         }
-        entry.setContent(entryUpdateRequest.content());
-        entry.setUpdatedAt(LocalDate.now());
-        journalEntryRepository.save(entry);
+        if(entryUpdateRequest.content() != null && !entryUpdateRequest.content().isEmpty()) {
+            entry.setContent(entryUpdateRequest.content());
+            updated = true;
+        }
+
+        if(updated) {
+            entry.setUpdatedAt(LocalDate.now());
+            journalEntryRepository.save(entry);
+        }
         return JournalEntryDtoMapper.toJournalEntryDto(entry);
     }
 
