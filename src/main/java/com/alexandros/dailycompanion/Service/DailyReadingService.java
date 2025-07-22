@@ -34,6 +34,9 @@ public class DailyReadingService {
 
     public DailyReadingDto getTodaysReading() {
         LocalDate today = LocalDate.now();
+        System.out.println("All readings:");
+        dailyReadingRepository.findAll().forEach(r -> System.out.println(r.getCreatedAt()));
+
         DailyReading todaysReading = dailyReadingRepository.findByCreatedAt(today)
                 .orElseThrow(() -> new IllegalArgumentException("Could not find today's reading!"));
         return DailyReadingDtoMapper.toDailyReadingDto(todaysReading);

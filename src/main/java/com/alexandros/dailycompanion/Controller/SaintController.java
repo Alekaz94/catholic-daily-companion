@@ -36,6 +36,12 @@ public class SaintController {
         return ResponseEntity.ok(saint);
     }
 
+    @GetMapping("/today")
+    public ResponseEntity<SaintDto> getTodaysSaint() {
+        SaintDto saint = saintService.getSaintByFeastDay();
+        return ResponseEntity.ok(saint);
+    }
+
     @PostMapping
     public ResponseEntity<SaintDto> createSaint(@Valid @RequestBody SaintRequest saintRequest) {
         SaintDto saint = saintService.createSaint(saintRequest);

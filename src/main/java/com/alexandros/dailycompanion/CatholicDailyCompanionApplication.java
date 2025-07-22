@@ -92,6 +92,17 @@ public class CatholicDailyCompanionApplication {
 			saintTwo.setCanonizationYear(400);
 			saintTwo.setImageUrl(null);
 			saintRepository.save(saintTwo);
+
+			Saint saintThree = new Saint();
+			saintThree.setName("St Example Two");
+			saintThree.setBirthYear(200);
+			saintThree.setDeathYear(300);
+			saintThree.setFeastDay(MonthDay.of(7, 22));
+			saintThree.setBiography("Sample biography for St Example Two.");
+			saintThree.setPatronage("Sample patronage");
+			saintThree.setCanonizationYear(400);
+			saintThree.setImageUrl(null);
+			saintRepository.save(saintThree);
 		};
 	}
 
@@ -108,12 +119,20 @@ public class CatholicDailyCompanionApplication {
 			dailyReadingRepository.save(reading);
 
 			DailyReading readingTwo = new DailyReading();
-			readingTwo.setCreatedAt(LocalDate.now());
+			readingTwo.setCreatedAt(LocalDate.of(2025, 5, 12));
 			readingTwo.setFirstReading("Exodus");
 			readingTwo.setSecondReading("Hebrews");
 			readingTwo.setPsalm("Psalm 24");
 			readingTwo.setGospel("Matthew");
 			dailyReadingRepository.save(readingTwo);
+
+			DailyReading readingThree = new DailyReading();
+			readingThree.setCreatedAt(LocalDate.of(2025, 2, 10));
+			readingThree.setFirstReading("Exodus");
+			readingThree.setSecondReading("Hebrews");
+			readingThree.setPsalm("Psalm 24");
+			readingThree.setGospel("Matthew");
+			dailyReadingRepository.save(readingThree);
 		};
 	}
 }
