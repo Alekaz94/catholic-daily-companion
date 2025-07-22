@@ -83,7 +83,12 @@ public class UserService implements UserDetailsService {
         }
 
         User user = getUserByIdOrThrow(userId);
-        user.setPassword(PasswordUtil.hashPassword(userUpdateRequest.password()));
+        String storedPasswordHash = userRepository.findPasswordHashById(userId);
+
+        if(!PasswordUtil.validateHashedPassword(userUpdateRequest.currentPassword(), storedPasswordHash)) {
+            throw new IllegalArgumentException("Current password is incorrect!");
+        }
+        user.setPassword(PasswordUtil.hashPassword(userUpdateRequest.newPassword()));
         user.setUpdatedAt(LocalDate.now());
         userRepository.save(user);
         return UserDtoMapper.toUserDto(user);
