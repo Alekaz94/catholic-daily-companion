@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.MonthDay;
 import java.util.List;
 import java.util.UUID;
@@ -34,17 +33,14 @@ public class SaintService {
     }
 
     public SaintDto createSaint(@Valid SaintRequest saintRequest) {
-        MonthDay feastMonthDay = MonthDay.from(saintRequest.feastDay());
-        LocalDate feastDay = feastMonthDay.atYear(2000);
-
         Saint saint = new Saint();
         saint.setName(saintRequest.name());
-        saint.setBirthYear(saint.getBirthYear());
+        saint.setBirthYear(saintRequest.birthYear());
         saint.setDeathYear(saintRequest.deathYear());
-        saint.setFeastDay(feastDay);
+        saint.setFeastDay(saintRequest.feastDay());
         saint.setBiography(saintRequest.biography());
         saint.setPatronage(saintRequest.patronage());
-        saint.setCanonizationYear(saint.getCanonizationYear());
+        saint.setCanonizationYear(saintRequest.canonizationYear());
         saint.setImageUrl(saintRequest.imageUrl());
         saintRepository.save(saint);
         return SaintDtoMapper.toSaintDto(saint);

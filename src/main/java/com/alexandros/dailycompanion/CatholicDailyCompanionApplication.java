@@ -70,13 +70,12 @@ public class CatholicDailyCompanionApplication {
 	@Order(3)
 	CommandLineRunner initSaints(SaintRepository saintRepository) {
 		return args -> {
-			MonthDay feastMonthDay = MonthDay.of(5, 15);
 
 			Saint saint = new Saint();
 			saint.setName("St Example");
 			saint.setBirthYear(100);
 			saint.setDeathYear(200);
-			saint.setFeastDay(feastMonthDay.atYear(2000));
+			saint.setFeastDay(MonthDay.of(12, 4));
 			saint.setBiography("Sample biography for St Example.");
 			saint.setPatronage("Sample patronage");
 			saint.setCanonizationYear(300);
@@ -87,7 +86,7 @@ public class CatholicDailyCompanionApplication {
 			saintTwo.setName("St Example Two");
 			saintTwo.setBirthYear(200);
 			saintTwo.setDeathYear(300);
-			saintTwo.setFeastDay(feastMonthDay.atYear(2000));
+			saintTwo.setFeastDay(MonthDay.of(10, 18));
 			saintTwo.setBiography("Sample biography for St Example Two.");
 			saintTwo.setPatronage("Sample patronage");
 			saintTwo.setCanonizationYear(400);
