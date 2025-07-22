@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +36,12 @@ public class DailyReadingController {
     public ResponseEntity<DailyReadingDto> getDailyReading(@PathVariable UUID readingId) {
         DailyReadingDto reading = dailyReadingService.getDailyReading(readingId);
         return ResponseEntity.ok(reading);
+    }
+
+    @GetMapping("/today")
+    public ResponseEntity<DailyReadingDto> getTodaysReading() {
+        DailyReadingDto todaysReading = dailyReadingService.getTodaysReading();
+        return ResponseEntity.ok(todaysReading);
     }
 
     @PostMapping
