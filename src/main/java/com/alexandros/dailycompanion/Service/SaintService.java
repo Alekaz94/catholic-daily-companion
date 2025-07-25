@@ -7,6 +7,10 @@ import com.alexandros.dailycompanion.Model.Saint;
 import com.alexandros.dailycompanion.Repository.SaintRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.MonthDay;
@@ -22,8 +26,15 @@ public class SaintService {
         this.saintRepository = saintRepository;
     }
 
-    public List<SaintDto> getAllSaints() {
-        List<Saint> saints = saintRepository.findAll();
+    public Page<SaintDto> getAllSaints(String query, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+
+        Page<Saint> saints;
+        if (query == null || query.trim().isEmpty()) {
+            saints = saintRepository.findAll(pageable);
+        } else {
+            saints = saintRepository.findByNameContainingIgnoreCase(query, pageable);
+        }
         return SaintDtoMapper.toSaintDto(saints);
     }
 

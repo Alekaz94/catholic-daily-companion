@@ -5,6 +5,7 @@ import com.alexandros.dailycompanion.DTO.SaintRequest;
 import com.alexandros.dailycompanion.Service.SaintService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -25,8 +26,10 @@ public class SaintController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SaintDto>> getAllSaints() {
-        List<SaintDto> saints = saintService.getAllSaints();
+    public ResponseEntity<Page<SaintDto>> getAllSaints(@RequestParam(required = false, defaultValue = "") String query,
+                                                       @RequestParam(defaultValue = "0") int page,
+                                                       @RequestParam(defaultValue = "5") int size) {
+        Page<SaintDto> saints = saintService.getAllSaints(query, page, size);
         return ResponseEntity.ok(saints);
     }
 
