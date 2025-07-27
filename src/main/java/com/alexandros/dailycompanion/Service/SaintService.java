@@ -45,9 +45,9 @@ public class SaintService {
 
     public SaintDto getSaintByFeastDay() {
         MonthDay today = MonthDay.now();
-        Saint todaysSaint = saintRepository.findByFeastDay(today)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find today's saint!"));
-        return SaintDtoMapper.toSaintDto(todaysSaint);
+        return saintRepository.findByFeastDay(today)
+                .map(SaintDtoMapper::toSaintDto)
+                .orElse(null);
     }
 
     public SaintDto createSaint(@Valid SaintRequest saintRequest) {
