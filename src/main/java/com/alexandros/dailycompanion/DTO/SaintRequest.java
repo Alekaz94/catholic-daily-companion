@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 import java.time.MonthDay;
 
-public record SaintRequest(@NotNull @Size(min = 1) String name,
+public record SaintRequest(@NotNull @Size(min = 2) String name,
                            @NotNull Integer birthYear,
                            @NotNull Integer deathYear,
                            @NotNull MonthDay feastDay,
