@@ -22,6 +22,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -148,12 +149,10 @@ public class UserServiceTest {
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         when(jwtUtil.generateToken(user.getEmail())).thenReturn("mocked-token");
 
-        var response = userService.login(request);
+        LoginResponse response = userService.login(request);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        LoginResponse loginResponse = (LoginResponse) response.getBody();
-        assertEquals(user.getEmail(), loginResponse.user().email());
-        assertEquals("mocked-token", loginResponse.token());
+        assertEquals(user.getEmail(), response.user().email());
+        assertEquals("mocked-token", response.token());
     }
 
     @Test
@@ -162,10 +161,9 @@ public class UserServiceTest {
 
         when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("Bad credentials"));
 
-        var response = userService.login(request);
-
-        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        assertEquals("Invalid credentials!", response.getBody());
+        assertThrows(AuthenticationException.class, () -> {
+            userService.login(request);
+        });
     }
 
     @Test

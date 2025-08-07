@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.AuthenticationException;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -22,7 +23,12 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
-        return userService.login(loginRequest);
+        try {
+            LoginResponse loginResponse = userService.login(loginRequest);
+            return ResponseEntity.ok(loginResponse);
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials!");
+        }
     }
 
     @PostMapping("/sign-up")

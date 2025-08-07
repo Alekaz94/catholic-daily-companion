@@ -98,20 +98,16 @@ public class UserService implements UserDetailsService {
         userRepository.deleteById(user.getId());
     }
 
-    public ResponseEntity<?> login(@Valid LoginRequest loginRequest) {
-        try{
-            Authentication auth = authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password()));
-            UserDetails userDetails = (UserDetails) auth.getPrincipal();
-            String token = jwtUtil.generateToken(userDetails.getUsername());
-            User user = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new UsernameNotFoundException("No user found!"));
-            UserDto userDto = UserDtoMapper.toUserDto(user);
+    public LoginResponse login(@Valid LoginRequest loginRequest) {
+        Authentication auth = authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password()));
+        UserDetails userDetails = (UserDetails) auth.getPrincipal();
+        String token = jwtUtil.generateToken(userDetails.getUsername());
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("No user found!"));
+        UserDto userDto = UserDtoMapper.toUserDto(user);
 
-            return ResponseEntity.ok(new LoginResponse(userDto, token));
-        } catch(AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials!");
-        }
+        return new LoginResponse(userDto, token);
     }
 
     public UserDto signUp(@Valid UserRequest userRequest) {
