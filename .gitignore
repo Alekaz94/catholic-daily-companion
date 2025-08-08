@@ -37,3 +37,6 @@ build/
 /src/main/resources/application-prod.properties
 !src/main/resources/application.properties.example
 .env
+
+# Firebase service account
+src/main/resources/firebase/ServiceAccountKey.json

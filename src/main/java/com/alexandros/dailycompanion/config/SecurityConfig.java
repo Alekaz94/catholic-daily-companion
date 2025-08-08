@@ -1,5 +1,6 @@
 package com.alexandros.dailycompanion.config;
 
+import com.alexandros.dailycompanion.security.FirebaseTokenFilter;
 import com.alexandros.dailycompanion.security.JwtRequestFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -21,13 +22,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final JwtRequestFilter jwtRequestFilter;
     private final UserDetailsService userDetailsService;
+    private final FirebaseTokenFilter firebaseTokenFilter;
 
     @Autowired
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter, UserDetailsService userDetailsService) {
-        this.jwtRequestFilter = jwtRequestFilter;
+    public SecurityConfig(UserDetailsService userDetailsService, FirebaseTokenFilter firebaseTokenFilter) {
         this.userDetailsService = userDetailsService;
+        this.firebaseTokenFilter = firebaseTokenFilter;
     }
 
     @Bean
@@ -50,7 +51,7 @@ public class SecurityConfig {
                 )
                 .sessionManagement(sessions ->
                         sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
