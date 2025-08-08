@@ -24,11 +24,13 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
     private final FirebaseTokenFilter firebaseTokenFilter;
+    private final JwtRequestFilter jwtRequestFilter;
 
     @Autowired
-    public SecurityConfig(UserDetailsService userDetailsService, FirebaseTokenFilter firebaseTokenFilter) {
+    public SecurityConfig(UserDetailsService userDetailsService, FirebaseTokenFilter firebaseTokenFilter, JwtRequestFilter jwtRequestFilter) {
         this.userDetailsService = userDetailsService;
         this.firebaseTokenFilter = firebaseTokenFilter;
+        this.jwtRequestFilter = jwtRequestFilter;
     }
 
     @Bean
@@ -52,6 +54,7 @@ public class SecurityConfig {
                 .sessionManagement(sessions ->
                         sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
