@@ -14,6 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,8 +25,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -70,13 +71,14 @@ public class JournalEntryControllerTest {
 
     @Test
     void getAllJournalEntriesShouldReturnList() throws Exception {
-        when(journalEntryService.getAllJournalEntriesForUser()).thenReturn(List.of(journalEntryDto));
+        Page<JournalEntryDto> page = new PageImpl<>(List.of(journalEntryDto));
+        when(journalEntryService.getAllJournalEntriesForUser(anyInt(), anyInt(), anyString())).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/journal-entry"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(entryId.toString()))
-                .andExpect(jsonPath("$[0].title").value("Hello"))
-                .andExpect(jsonPath("$[0].content").value("Content"));
+                .andExpect(jsonPath("$.content[0].id").value(entryId.toString()))
+                .andExpect(jsonPath("$.content[0].title").value("Hello"))
+                .andExpect(jsonPath("$.content[0].content").value("Content"));
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.alexandros.dailycompanion.mapper;
 
 import com.alexandros.dailycompanion.dto.JournalEntryDto;
 import com.alexandros.dailycompanion.model.JournalEntry;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -23,5 +24,9 @@ public class JournalEntryDtoMapper {
 
     public static List<JournalEntryDto> toJournalEntryDto(List<JournalEntry> journalEntries) {
         return journalEntries.stream().map(JournalEntryDtoMapper::toJournalEntryDto).toList();
+    }
+
+    public static Page<JournalEntryDto> toJournalEntryDto(Page<JournalEntry> entries) {
+        return entries.map(JournalEntryDtoMapper::toJournalEntryDto);
     }
 }

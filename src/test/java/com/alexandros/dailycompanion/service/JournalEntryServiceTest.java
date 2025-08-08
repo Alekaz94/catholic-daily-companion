@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.nio.file.AccessDeniedException;
@@ -103,31 +104,36 @@ public class JournalEntryServiceTest {
 
     @Test
     void getAllJournalEntriesShouldReturnJournalEntryDtoListForUser() {
+        Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "createdAt"));
+        Page<JournalEntry> page = new PageImpl<>(List.of(journalEntry));
         mockAuthenticatedUser(user);
         journalEntry.setUser(user);
 
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-        when(journalEntryRepository.findAllByUserId(user.getId())).thenReturn(List.of(journalEntry));
-        List<JournalEntryDto> result = journalEntryService.getAllJournalEntriesForUser();
+        when(journalEntryRepository.findAllByUserId(user.getId(), pageable)).thenReturn(page);
+        Page<JournalEntryDto> result = journalEntryService.getAllJournalEntriesForUser(0, 5, "asc");
 
-        assertEquals(1, result.size());
-        assertEquals("Hello there", result.getFirst().title());
-        assertEquals("Hello to you too.", result.getFirst().content());
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Hello there", result.getContent().getFirst().title());
+        assertEquals("Hello to you too.", result.getContent().getFirst().content());
     }
 
     @Test
     void getAllJournalEntriesShouldReturnJournalEntryDtoListForAdmin() {
+        Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "createdAt"));
+        Page<JournalEntry> page = new PageImpl<>(List.of(journalEntry));
+
         user.setRole(Roles.ADMIN);
         mockAuthenticatedUser(user);
         journalEntry.setUser(user);
 
         when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-        when(journalEntryRepository.findAll()).thenReturn(List.of(journalEntry));
-        List<JournalEntryDto> result = journalEntryService.getAllJournalEntriesForUser();
+        when(journalEntryRepository.findAll(pageable)).thenReturn(page);
+        Page<JournalEntryDto> result = journalEntryService.getAllJournalEntriesForUser(0, 5, "asc");
 
-        assertEquals(1, result.size());
-        assertEquals("Hello there", result.getFirst().title());
-        assertEquals("Hello to you too.", result.getFirst().content());
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Hello there", result.getContent().getFirst().title());
+        assertEquals("Hello to you too.", result.getContent().getFirst().content());
     }
 
     @Test

@@ -12,6 +12,10 @@ import com.alexandros.dailycompanion.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -33,15 +37,27 @@ public class JournalEntryService {
         this.userRepository = userRepository;
     }
 
-    public List<JournalEntryDto> getAllJournalEntriesForUser() {
-        List<JournalEntry> entries;
+    public Page<JournalEntryDto> getAllJournalEntriesForUser(int page, int size, String sort) {
+        Sort.Direction direction;
+
+        if("asc".equalsIgnoreCase(sort)) {
+            direction = Sort.Direction.ASC;
+        } else if ("desc".equalsIgnoreCase(sort)) {
+            direction = Sort.Direction.DESC;
+        } else {
+            direction = Sort.Direction.DESC;
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "createdAt"));
+
+        Page<JournalEntry> entries;
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = getUserByEmail(email);
 
         if(user.getRole().equals(Roles.ADMIN)) {
-            entries = journalEntryRepository.findAll();
+            entries = journalEntryRepository.findAll(pageable);
         } else  {
-            entries = journalEntryRepository.findAllByUserId(user.getId());
+            entries = journalEntryRepository.findAllByUserId(user.getId(), pageable);
         }
         return JournalEntryDtoMapper.toJournalEntryDto(entries);
     }
