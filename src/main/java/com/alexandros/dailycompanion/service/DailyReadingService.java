@@ -7,6 +7,10 @@ import com.alexandros.dailycompanion.model.DailyReading;
 import com.alexandros.dailycompanion.repository.DailyReadingRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -27,9 +31,12 @@ public class DailyReadingService {
         return DailyReadingDtoMapper.toDailyReadingDto(reading);
     }
 
-    public List<DailyReadingDto> getAllReadings() {
-        List<DailyReading> readings = dailyReadingRepository.findAll();
-        return DailyReadingDtoMapper.toDailyReadingDto(readings);
+    public Page<DailyReadingDto> getAllReadings(int page, int size, String sort) {
+        Sort.Direction direction = sort.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "createdAt"));
+
+        Page<DailyReading> dailyReadings = dailyReadingRepository.findAll(pageable);
+        return DailyReadingDtoMapper.toDailyReadingDto(dailyReadings);
     }
 
     public DailyReadingDto getTodaysReading() {

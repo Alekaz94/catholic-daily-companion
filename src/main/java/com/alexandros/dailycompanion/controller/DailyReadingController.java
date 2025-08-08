@@ -5,6 +5,7 @@ import com.alexandros.dailycompanion.dto.DailyReadingRequest;
 import com.alexandros.dailycompanion.service.DailyReadingService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -25,8 +26,10 @@ public class DailyReadingController {
     }
 
     @GetMapping
-    public ResponseEntity<List<DailyReadingDto>> getAllReadings() {
-        List<DailyReadingDto> readings = dailyReadingService.getAllReadings();
+    public ResponseEntity<Page<DailyReadingDto>> getAllReadings(@RequestParam(defaultValue = "0") int page,
+                                                                @RequestParam(defaultValue = "5") int size,
+                                                                @RequestParam(defaultValue = "desc") String sort) {
+        Page<DailyReadingDto> readings = dailyReadingService.getAllReadings(page, size, sort);
         return ResponseEntity.ok(readings);
     }
 

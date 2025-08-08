@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -85,16 +86,18 @@ public class DailyReadingServiceTest {
 
     @Test
     void getAllDailyReadingsShouldReturnDailyReadingDtos() {
-        when(dailyReadingRepository.findAll()).thenReturn(List.of(dailyReading));
+        Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.ASC, "createdAt"));
+        Page<DailyReading> page = new PageImpl<>(List.of(dailyReading));
+        when(dailyReadingRepository.findAll(pageable)).thenReturn(page);
 
-        List<DailyReadingDto> result = dailyReadingService.getAllReadings();
+        Page<DailyReadingDto> result = dailyReadingService.getAllReadings(0, 5, "asc");
 
-        assertEquals(1, result.size());
-        assertEquals("Exodus", result.getFirst().firstReading());
-        assertEquals("Hebrews", result.getFirst().secondReading());
-        assertEquals("Psalm 123", result.getFirst().psalm());
-        assertEquals("John", result.getFirst().gospel());
-        assertEquals(LocalDate.of(2025, 10, 5), result.getFirst().createdAt());
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Exodus", result.getContent().getFirst().firstReading());
+        assertEquals("Hebrews", result.getContent().getFirst().secondReading());
+        assertEquals("Psalm 123", result.getContent().getFirst().psalm());
+        assertEquals("John", result.getContent().getFirst().gospel());
+        assertEquals(LocalDate.of(2025, 10, 5), result.getContent().getFirst().createdAt());
     }
 
     @Test

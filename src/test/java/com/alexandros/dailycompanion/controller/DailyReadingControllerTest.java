@@ -13,6 +13,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,7 +23,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -65,13 +67,14 @@ public class DailyReadingControllerTest {
     }
 
     @Test
-    void getAllDailyReadingsShouldReturnListOfDailyReadingDto() throws Exception {
-        when(dailyReadingService.getAllReadings()).thenReturn(List.of(dailyReadingDto));
+    void getAllDailyReadingsShouldReturnPageOfDailyReadingDto() throws Exception {
+        Page<DailyReadingDto> page = new PageImpl<>(List.of(dailyReadingDto));
+        when(dailyReadingService.getAllReadings(anyInt(), anyInt(), anyString())).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/daily-reading"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(readingId.toString()))
-                .andExpect(jsonPath("$[0].createdAt").value(LocalDate.now().toString()));
+                .andExpect(jsonPath("$.content[0].id").value(readingId.toString()))
+                .andExpect(jsonPath("$.content[0].createdAt").value(LocalDate.now().toString()));
     }
 
     @Test
