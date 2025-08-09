@@ -48,7 +48,8 @@ public class JournalEntryService {
             direction = Sort.Direction.DESC;
         }
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "createdAt"));
+        Sort sortBy = Sort.by(direction, "updatedAt").and(Sort.by(direction, "createdAt"));
+        Pageable pageable = PageRequest.of(page, size, sortBy);
 
         Page<JournalEntry> entries;
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
