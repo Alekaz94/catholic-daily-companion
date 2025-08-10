@@ -2,6 +2,7 @@ package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.DailyReadingDto;
 import com.alexandros.dailycompanion.dto.DailyReadingRequest;
+import com.alexandros.dailycompanion.dto.DailyReadingUpdateRequest;
 import com.alexandros.dailycompanion.service.DailyReadingService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,5 +52,16 @@ public class DailyReadingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(reading);
     }
 
-    // Updating or deleting daily readings are intentionally not supported at the moment.
+    @PutMapping("/{readingId}")
+    public ResponseEntity<DailyReadingDto> updateDailyReading(@PathVariable UUID readingId,
+                                                              @RequestBody DailyReadingUpdateRequest dailyReadingUpdateRequest) {
+        DailyReadingDto reading = dailyReadingService.updateReading(readingId, dailyReadingUpdateRequest);
+        return ResponseEntity.ok(reading);
+    }
+
+    @DeleteMapping("/{readingId}")
+    public ResponseEntity<Void> deleteDailyReading(@PathVariable UUID readingId) {
+        dailyReadingService.deleteReading(readingId);
+        return ResponseEntity.noContent().build();
+    }
 }

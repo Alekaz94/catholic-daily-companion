@@ -2,6 +2,7 @@ package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.SaintDto;
 import com.alexandros.dailycompanion.dto.SaintRequest;
+import com.alexandros.dailycompanion.dto.SaintUpdateRequest;
 import com.alexandros.dailycompanion.mapper.SaintDtoMapper;
 import com.alexandros.dailycompanion.model.Saint;
 import com.alexandros.dailycompanion.repository.SaintRepository;
@@ -61,6 +62,41 @@ public class SaintService {
         saint.setImageUrl(saintRequest.imageUrl());
         saintRepository.save(saint);
         return SaintDtoMapper.toSaintDto(saint);
+    }
+
+    public SaintDto updateSaint(UUID saintId, SaintUpdateRequest saintUpdateRequest) {
+        Saint currentSaint = getSaintById(saintId);
+        if(saintUpdateRequest.name() != null) {
+            currentSaint.setName(saintUpdateRequest.name());
+        }
+        if(saintUpdateRequest.birthYear() != null) {
+            currentSaint.setBirthYear(saintUpdateRequest.birthYear());
+        }
+        if(saintUpdateRequest.deathYear() != null) {
+            currentSaint.setDeathYear(saintUpdateRequest.deathYear());
+        }
+        if(saintUpdateRequest.feastDay() != null) {
+            currentSaint.setFeastDay(saintUpdateRequest.feastDay());
+        }
+        if(saintUpdateRequest.biography() != null) {
+            currentSaint.setBiography(saintUpdateRequest.biography());
+        }
+        if(saintUpdateRequest.canonizationYear() != null) {
+            currentSaint.setCanonizationYear(saintUpdateRequest.canonizationYear());
+        }
+        if(saintUpdateRequest.patronage() != null) {
+            currentSaint.setPatronage(saintUpdateRequest.patronage());
+        }
+        if(saintUpdateRequest.imageUrl() != null) {
+            currentSaint.setImageUrl(saintUpdateRequest.imageUrl());
+        }
+        saintRepository.save(currentSaint);
+        return SaintDtoMapper.toSaintDto(currentSaint);
+    }
+
+    public void deleteSaint(UUID saintId) {
+        Saint saint = getSaintById(saintId);
+        saintRepository.deleteById(saint.getId());
     }
 
     private Saint getSaintById(UUID id) {

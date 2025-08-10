@@ -2,6 +2,7 @@ package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.SaintDto;
 import com.alexandros.dailycompanion.dto.SaintRequest;
+import com.alexandros.dailycompanion.dto.SaintUpdateRequest;
 import com.alexandros.dailycompanion.service.SaintService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +49,19 @@ public class SaintController {
     public ResponseEntity<SaintDto> createSaint(@Valid @RequestBody SaintRequest saintRequest) {
         SaintDto saint = saintService.createSaint(saintRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(saint);
+    }
+
+    @PutMapping("/{saintId}")
+    public ResponseEntity<SaintDto> updateSaint(@PathVariable UUID saintId,
+                                                @RequestBody SaintUpdateRequest saintUpdateRequest) {
+        SaintDto saint = saintService.updateSaint(saintId, saintUpdateRequest);
+        return ResponseEntity.ok(saint);
+    }
+
+    @DeleteMapping("/{saintId}")
+    public ResponseEntity<Void> deleteSaint(@PathVariable UUID saintId) {
+        saintService.deleteSaint(saintId);
+        return ResponseEntity.noContent().build();
     }
 
 }

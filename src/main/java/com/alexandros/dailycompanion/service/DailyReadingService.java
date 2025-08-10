@@ -2,6 +2,7 @@ package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.DailyReadingDto;
 import com.alexandros.dailycompanion.dto.DailyReadingRequest;
+import com.alexandros.dailycompanion.dto.DailyReadingUpdateRequest;
 import com.alexandros.dailycompanion.mapper.DailyReadingDtoMapper;
 import com.alexandros.dailycompanion.model.DailyReading;
 import com.alexandros.dailycompanion.repository.DailyReadingRepository;
@@ -61,6 +62,29 @@ public class DailyReadingService {
         dailyReadingRepository.save(reading);
 
         return DailyReadingDtoMapper.toDailyReadingDto(reading);
+    }
+
+    public DailyReadingDto updateReading(UUID readingId, DailyReadingUpdateRequest dailyReadingUpdateRequest) {
+        DailyReading currentReading = getDailyReadingById(readingId);
+        if(dailyReadingUpdateRequest.firstReading() != null) {
+            currentReading.setFirstReading(dailyReadingUpdateRequest.firstReading());
+        }
+        if(dailyReadingUpdateRequest.secondReading() != null) {
+            currentReading.setSecondReading(dailyReadingUpdateRequest.secondReading());
+        }
+        if(dailyReadingUpdateRequest.psalm() != null) {
+            currentReading.setPsalm(dailyReadingUpdateRequest.psalm());
+        }
+        if(dailyReadingUpdateRequest.firstReading() != null) {
+            currentReading.setGospel(dailyReadingUpdateRequest.gospel());
+        }
+        dailyReadingRepository.save(currentReading);
+        return DailyReadingDtoMapper.toDailyReadingDto(currentReading);
+    }
+
+    public void deleteReading(UUID readingId) {
+        DailyReading dailyReading = getDailyReadingById(readingId);
+        dailyReadingRepository.deleteById(dailyReading.getId());
     }
 
     private DailyReading getDailyReadingById(UUID id) {
