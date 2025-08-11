@@ -6,6 +6,7 @@ import com.alexandros.dailycompanion.dto.UserUpdateRequest;
 import com.alexandros.dailycompanion.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -27,8 +28,12 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDto>> getAllUsers() {
-        List<UserDto> users = userService.getAllUsers();
+    public ResponseEntity<Page<UserDto>> getAllUsers(@RequestParam(required = false, defaultValue = "") String query,
+                                                     @RequestParam(defaultValue = "0") int page,
+                                                     @RequestParam(defaultValue = "5") int size,
+                                                     @RequestParam(defaultValue = "email") String sortBy,
+                                                     @RequestParam(defaultValue = "asc") String sortDir) {
+        Page<UserDto> users = userService.getAllUsers(query, page, size, sortBy, sortDir);
         return ResponseEntity.ok(users);
     }
 

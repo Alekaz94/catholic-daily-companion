@@ -10,6 +10,10 @@ import com.alexandros.dailycompanion.security.PasswordUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,8 +46,16 @@ public class UserService implements UserDetailsService {
         this.jwtUtil = jwtUtil;
     }
 
-    public List<UserDto> getAllUsers() {
-        List<User> users = userRepository.findAll();
+    public Page<UserDto> getAllUsers(String query, int page, int size, String sortBy, String sortDir) {
+        Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        Page<User> users;
+        if(query == null || query.trim().isEmpty()) {
+            users = userRepository.findAll(pageable);
+        } else {
+            users = userRepository.findAllByEmailContainingIgnoreCase(query, pageable);
+        }
         return UserDtoMapper.toUserDto(users);
     }
 
