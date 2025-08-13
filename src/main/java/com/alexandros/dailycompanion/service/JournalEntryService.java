@@ -29,12 +29,12 @@ import java.util.UUID;
 @Service
 public class JournalEntryService {
     private final JournalEntryRepository journalEntryRepository;
-    private final UserRepository userRepository;
+    private final ServiceHelper serviceHelper;
 
     @Autowired
-    public JournalEntryService(JournalEntryRepository journalEntryRepository, UserRepository userRepository) {
+    public JournalEntryService(JournalEntryRepository journalEntryRepository, ServiceHelper serviceHelper) {
         this.journalEntryRepository = journalEntryRepository;
-        this.userRepository = userRepository;
+        this.serviceHelper = serviceHelper;
     }
 
     public Page<JournalEntryDto> getAllJournalEntriesForUser(int page, int size, String sort) {
@@ -53,7 +53,7 @@ public class JournalEntryService {
 
         Page<JournalEntry> entries;
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = getUserByEmail(email);
+        User user = serviceHelper.getUserByEmail(email);
 
         if(user.getRole().equals(Roles.ADMIN)) {
             entries = journalEntryRepository.findAll(pageable);
@@ -64,12 +64,12 @@ public class JournalEntryService {
     }
 
     public JournalEntryDto getEntryById(UUID entryId) throws AccessDeniedException {
-        JournalEntry entry = getJournalEntryForCurrentUser(entryId);
+        JournalEntry entry = serviceHelper.getJournalEntryForCurrentUser(entryId);
         return JournalEntryDtoMapper.toJournalEntryDto(entry);
     }
 
     public JournalEntryDto createJournalEntry(@Valid JournalEntryRequest entryRequest, String email) {
-        User user = getUserByEmail(email);
+        User user = serviceHelper.getUserByEmail(email);
         JournalEntry entry = new JournalEntry();
 
         entry.setCreatedAt(LocalDate.now());
@@ -84,7 +84,7 @@ public class JournalEntryService {
 
     public JournalEntryDto updateJournalEntry(UUID entryId,
                                               JournalEntryUpdateRequest entryUpdateRequest) throws AccessDeniedException {
-        JournalEntry entry = getJournalEntryForCurrentUser(entryId);
+        JournalEntry entry = serviceHelper.getJournalEntryForCurrentUser(entryId);
         boolean updated = false;
 
         if(entryUpdateRequest.title() != null && !entryUpdateRequest.title().isEmpty()) {
@@ -104,36 +104,7 @@ public class JournalEntryService {
     }
 
     public void deleteJournalEntry(UUID entryId) throws AccessDeniedException {
-        JournalEntry entry = getJournalEntryForCurrentUser(entryId);
+        JournalEntry entry = serviceHelper.getJournalEntryForCurrentUser(entryId);
         journalEntryRepository.deleteById(entry.getId());
-    }
-
-    private JournalEntry getJournalEntryForCurrentUser(UUID entryId) throws AccessDeniedException {
-        JournalEntry entry = getJournalEntryOrThrow(entryId);
-        User currentUser = getAuthenticatedUser();
-        if(!isOwnerOrAdmin(entry, currentUser)) {
-            throw new AccessDeniedException("You are not authorized to access this journal entry!");
-        }
-        return entry;
-    }
-
-    private JournalEntry getJournalEntryOrThrow(UUID id) {
-        return journalEntryRepository.findById(id).orElseThrow(() ->
-                new EntityNotFoundException("Could not find journal entry!"));
-    }
-
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        return userRepository.findByEmail(email).orElseThrow(() ->
-                new UsernameNotFoundException("Authenticated user not found!"));
-    }
-
-    private boolean isOwnerOrAdmin(JournalEntry entry, User user) {
-        return user.getRole().equals(Roles.ADMIN) || entry.getUser().getId().equals(user.getId());
-    }
-
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found!"));
     }
 }

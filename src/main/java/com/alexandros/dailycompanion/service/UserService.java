@@ -39,11 +39,14 @@ public class UserService implements UserDetailsService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final ServiceHelper serviceHelper;
+
     @Autowired
-    public UserService(@Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil) {
+    public UserService(@Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil, ServiceHelper serviceHelper) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
+        this.serviceHelper = serviceHelper;
     }
 
     public Page<UserDto> getAllUsers(String query, int page, int size, String sortBy, String sortDir) {
@@ -65,7 +68,7 @@ public class UserService implements UserDetailsService {
             throw new AccessDeniedException("You are not allowed to this user's information");
         }
 
-        User user = getUserByIdOrThrow(userId);
+        User user = serviceHelper.getUserByIdOrThrow(userId);
         return UserDtoMapper.toUserDto(user);
     }
 
@@ -93,7 +96,7 @@ public class UserService implements UserDetailsService {
             throw new AccessDeniedException("You are not allowed to this user's information");
         }
 
-        User user = getUserByIdOrThrow(userId);
+        User user = serviceHelper.getUserByIdOrThrow(userId);
         String storedPasswordHash = userRepository.findPasswordHashById(userId);
 
         if(!PasswordUtil.validateHashedPassword(userUpdateRequest.currentPassword(), storedPasswordHash)) {
@@ -106,7 +109,7 @@ public class UserService implements UserDetailsService {
     }
 
     public void deleteUser(UUID userId) {
-        User user = getUserByIdOrThrow(userId);
+        User user = serviceHelper.getUserByIdOrThrow(userId);
         userRepository.deleteById(user.getId());
     }
 
@@ -144,11 +147,6 @@ public class UserService implements UserDetailsService {
         String email = authentication.getName();
         return userRepository.findByEmail(email).orElseThrow(() ->
                 new UsernameNotFoundException("Authenticated user not found!"));
-    }
-
-    private User getUserByIdOrThrow(UUID id) {
-        return userRepository.findById(id).orElseThrow(() ->
-                new UsernameNotFoundException("Could not find user!"));
     }
 
     @Override

@@ -20,10 +20,12 @@ import java.util.UUID;
 @Service
 public class SaintService {
     private final SaintRepository saintRepository;
+    private final ServiceHelper serviceHelper;
 
     @Autowired
-    public SaintService(SaintRepository saintRepository) {
+    public SaintService(SaintRepository saintRepository, ServiceHelper serviceHelper) {
         this.saintRepository = saintRepository;
+        this.serviceHelper = serviceHelper;
     }
 
     public Page<SaintDto> getAllSaints(String query, int page, int size) {
@@ -39,7 +41,7 @@ public class SaintService {
     }
 
     public SaintDto getSaint(UUID saintId) {
-        Saint saint = getSaintById(saintId);
+        Saint saint = serviceHelper.getSaintById(saintId);
         return SaintDtoMapper.toSaintDto(saint);
     }
 
@@ -65,7 +67,7 @@ public class SaintService {
     }
 
     public SaintDto updateSaint(UUID saintId, SaintUpdateRequest saintUpdateRequest) {
-        Saint currentSaint = getSaintById(saintId);
+        Saint currentSaint = serviceHelper.getSaintById(saintId);
         if(saintUpdateRequest.name() != null) {
             currentSaint.setName(saintUpdateRequest.name());
         }
@@ -95,12 +97,7 @@ public class SaintService {
     }
 
     public void deleteSaint(UUID saintId) {
-        Saint saint = getSaintById(saintId);
+        Saint saint = serviceHelper.getSaintById(saintId);
         saintRepository.deleteById(saint.getId());
-    }
-
-    private Saint getSaintById(UUID id) {
-        return saintRepository.findById(id).orElseThrow(() ->
-                new IllegalArgumentException(String.format("Could not find saint with id: %s", id)));
     }
 }

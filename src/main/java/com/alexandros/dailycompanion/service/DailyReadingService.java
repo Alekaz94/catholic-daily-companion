@@ -21,14 +21,16 @@ import java.util.UUID;
 @Service
 public class DailyReadingService {
     private final DailyReadingRepository dailyReadingRepository;
+    private final ServiceHelper serviceHelper;
 
     @Autowired
-    public DailyReadingService(DailyReadingRepository dailyReadingRepository) {
+    public DailyReadingService(DailyReadingRepository dailyReadingRepository, ServiceHelper serviceHelper) {
         this.dailyReadingRepository = dailyReadingRepository;
+        this.serviceHelper = serviceHelper;
     }
 
     public DailyReadingDto getDailyReading(UUID id) {
-        DailyReading reading = getDailyReadingById(id);
+        DailyReading reading = serviceHelper.getDailyReadingById(id);
         return DailyReadingDtoMapper.toDailyReadingDto(reading);
     }
 
@@ -65,7 +67,7 @@ public class DailyReadingService {
     }
 
     public DailyReadingDto updateReading(UUID readingId, DailyReadingUpdateRequest dailyReadingUpdateRequest) {
-        DailyReading currentReading = getDailyReadingById(readingId);
+        DailyReading currentReading = serviceHelper.getDailyReadingById(readingId);
         if(dailyReadingUpdateRequest.firstReading() != null) {
             currentReading.setFirstReading(dailyReadingUpdateRequest.firstReading());
         }
@@ -83,13 +85,8 @@ public class DailyReadingService {
     }
 
     public void deleteReading(UUID readingId) {
-        DailyReading dailyReading = getDailyReadingById(readingId);
+        DailyReading dailyReading = serviceHelper.getDailyReadingById(readingId);
         dailyReadingRepository.deleteById(dailyReading.getId());
-    }
-
-    private DailyReading getDailyReadingById(UUID id) {
-        return dailyReadingRepository.findById(id).orElseThrow(() ->
-                new IllegalArgumentException(String.format("Could not find daily reading with id: %s", id)));
     }
 }
 
