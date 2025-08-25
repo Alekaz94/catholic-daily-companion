@@ -27,8 +27,9 @@ public class Saint {
     private MonthDay feastDay;
     @Column(columnDefinition = "TEXT")
     private String biography;
-
+    @Column(columnDefinition = "TEXT")
     private String patronage;
     private Integer canonizationYear;
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 }

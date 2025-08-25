@@ -3,6 +3,7 @@ package com.alexandros.dailycompanion.controller;
 import com.alexandros.dailycompanion.dto.JournalEntryDto;
 import com.alexandros.dailycompanion.dto.JournalEntryRequest;
 import com.alexandros.dailycompanion.dto.JournalEntryUpdateRequest;
+import com.alexandros.dailycompanion.dto.PageResponse;
 import com.alexandros.dailycompanion.service.JournalEntryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,11 +30,21 @@ public class JournalEntryController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<JournalEntryDto>> getAllJournalEntries(@RequestParam(defaultValue = "0") int page,
-                                                                      @RequestParam(defaultValue = "5") int size,
-                                                                      @RequestParam(defaultValue = "desc") String sort) {
+    public ResponseEntity<PageResponse<JournalEntryDto>> getAllJournalEntries(@RequestParam(defaultValue = "0") int page,
+                                                                              @RequestParam(defaultValue = "5") int size,
+                                                                              @RequestParam(defaultValue = "desc") String sort) {
         Page<JournalEntryDto> entries = journalEntryService.getAllJournalEntriesForUser(page, size, sort);
-        return ResponseEntity.ok(entries);
+
+        PageResponse<JournalEntryDto> response = new PageResponse<>(
+                entries.getContent(),
+                entries.getNumber(),
+                entries.getSize(),
+                entries.getTotalElements(),
+                entries.getTotalPages(),
+                entries.isLast()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{entryId}")

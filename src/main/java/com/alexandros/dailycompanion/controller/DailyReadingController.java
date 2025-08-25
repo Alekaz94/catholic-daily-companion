@@ -1,8 +1,6 @@
 package com.alexandros.dailycompanion.controller;
 
-import com.alexandros.dailycompanion.dto.DailyReadingDto;
-import com.alexandros.dailycompanion.dto.DailyReadingRequest;
-import com.alexandros.dailycompanion.dto.DailyReadingUpdateRequest;
+import com.alexandros.dailycompanion.dto.*;
 import com.alexandros.dailycompanion.service.DailyReadingService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,11 +25,21 @@ public class DailyReadingController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<DailyReadingDto>> getAllReadings(@RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<PageResponse<DailyReadingDto>> getAllReadings(@RequestParam(defaultValue = "0") int page,
                                                                 @RequestParam(defaultValue = "5") int size,
                                                                 @RequestParam(defaultValue = "desc") String sort) {
         Page<DailyReadingDto> readings = dailyReadingService.getAllReadings(page, size, sort);
-        return ResponseEntity.ok(readings);
+
+        PageResponse<DailyReadingDto> response = new PageResponse<>(
+                readings.getContent(),
+                readings.getNumber(),
+                readings.getSize(),
+                readings.getTotalElements(),
+                readings.getTotalPages(),
+                readings.isLast()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{readingId}")

@@ -3,6 +3,7 @@ package com.alexandros.dailycompanion.controller;
 import com.alexandros.dailycompanion.dto.SaintDto;
 import com.alexandros.dailycompanion.dto.SaintRequest;
 import com.alexandros.dailycompanion.dto.SaintUpdateRequest;
+import com.alexandros.dailycompanion.dto.PageResponse;
 import com.alexandros.dailycompanion.service.SaintService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,11 +27,21 @@ public class SaintController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<SaintDto>> getAllSaints(@RequestParam(required = false, defaultValue = "") String query,
-                                                       @RequestParam(defaultValue = "0") int page,
-                                                       @RequestParam(defaultValue = "5") int size) {
-        Page<SaintDto> saints = saintService.getAllSaints(query, page, size);
-        return ResponseEntity.ok(saints);
+    public ResponseEntity<PageResponse<SaintDto>> getAllSaints(@RequestParam(required = false, defaultValue = "") String query,
+                                                               @RequestParam(defaultValue = "0") int page,
+                                                               @RequestParam(defaultValue = "5") int size) {
+        Page<SaintDto> saintPage = saintService.getAllSaints(query, page, size);
+
+        PageResponse<SaintDto> response = new PageResponse<>(
+                saintPage.getContent(),
+                saintPage.getNumber(),
+                saintPage.getSize(),
+                saintPage.getTotalElements(),
+                saintPage.getTotalPages(),
+                saintPage.isLast()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{saintId}")

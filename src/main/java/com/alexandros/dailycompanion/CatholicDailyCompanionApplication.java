@@ -1,25 +1,34 @@
 package com.alexandros.dailycompanion;
 
-import com.alexandros.dailycompanion.Enum.Roles;
-import com.alexandros.dailycompanion.Model.DailyReading;
-import com.alexandros.dailycompanion.Model.JournalEntry;
-import com.alexandros.dailycompanion.Model.Saint;
-import com.alexandros.dailycompanion.Model.User;
-import com.alexandros.dailycompanion.Repository.DailyReadingRepository;
-import com.alexandros.dailycompanion.Repository.JournalEntryRepository;
-import com.alexandros.dailycompanion.Repository.SaintRepository;
-import com.alexandros.dailycompanion.Repository.UserRepository;
-import com.alexandros.dailycompanion.Security.PasswordUtil;
+import com.alexandros.dailycompanion.dto.SaintDto;
+import com.alexandros.dailycompanion.enums.Roles;
+import com.alexandros.dailycompanion.initializer.DataSeeder;
+import com.alexandros.dailycompanion.model.DailyReading;
+import com.alexandros.dailycompanion.model.JournalEntry;
+import com.alexandros.dailycompanion.model.Saint;
+import com.alexandros.dailycompanion.model.User;
+import com.alexandros.dailycompanion.repository.DailyReadingRepository;
+import com.alexandros.dailycompanion.repository.JournalEntryRepository;
+import com.alexandros.dailycompanion.repository.SaintRepository;
+import com.alexandros.dailycompanion.repository.UserRepository;
+import com.alexandros.dailycompanion.security.PasswordUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.deser.MonthDayDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.io.ClassPathResource;
+import com.fasterxml.jackson.core.type.TypeReference;
 
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.MonthDay;
-import java.util.Optional;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @SpringBootApplication
 public class CatholicDailyCompanionApplication {
@@ -59,8 +68,8 @@ public class CatholicDailyCompanionApplication {
 			JournalEntry entry = new JournalEntry();
 			entry.setTitle("Example Entry");
 			entry.setContent("This is an example journal entry.");
-			entry.setCreatedAt(LocalDate.now());
-			entry.setUpdatedAt(LocalDate.now());
+			entry.setCreatedAt(LocalDate.of(2024, 5, 10));
+			entry.setUpdatedAt(LocalDate.of(2024, 5,12));
 			entry.setUser(adminUser);
 			journalEntryRepository.save(entry);
 		};
@@ -68,41 +77,9 @@ public class CatholicDailyCompanionApplication {
 
 	@Bean
 	@Order(3)
-	CommandLineRunner initSaints(SaintRepository saintRepository) {
+	public CommandLineRunner seedData(DataSeeder dataSeeder) {
 		return args -> {
-
-			Saint saint = new Saint();
-			saint.setName("St Example");
-			saint.setBirthYear(100);
-			saint.setDeathYear(200);
-			saint.setFeastDay(MonthDay.of(12, 4));
-			saint.setBiography("Sample biography for St Example.");
-			saint.setPatronage("Sample patronage");
-			saint.setCanonizationYear(300);
-			saint.setImageUrl(null);
-			saintRepository.save(saint);
-
-			Saint saintTwo = new Saint();
-			saintTwo.setName("St Example Two");
-			saintTwo.setBirthYear(200);
-			saintTwo.setDeathYear(300);
-			saintTwo.setFeastDay(MonthDay.of(10, 18));
-			saintTwo.setBiography("Sample biography for St Example Two.");
-			saintTwo.setPatronage("Sample patronage");
-			saintTwo.setCanonizationYear(400);
-			saintTwo.setImageUrl(null);
-			saintRepository.save(saintTwo);
-
-			Saint saintThree = new Saint();
-			saintThree.setName("St Example Two");
-			saintThree.setBirthYear(200);
-			saintThree.setDeathYear(300);
-			saintThree.setFeastDay(MonthDay.of(7, 22));
-			saintThree.setBiography("Sample biography for St Example Two.");
-			saintThree.setPatronage("Sample patronage");
-			saintThree.setCanonizationYear(400);
-			saintThree.setImageUrl(null);
-			saintRepository.save(saintThree);
+			dataSeeder.seedSaintsIfEmpty();
 		};
 	}
 

@@ -68,31 +68,44 @@ public class SaintService {
 
     public SaintDto updateSaint(UUID saintId, SaintUpdateRequest saintUpdateRequest) {
         Saint currentSaint = serviceHelper.getSaintById(saintId);
-        if(saintUpdateRequest.name() != null) {
+        boolean updated = false;
+
+        if(saintUpdateRequest.name() != null && !saintUpdateRequest.name().isEmpty()) {
             currentSaint.setName(saintUpdateRequest.name());
+            updated = true;
         }
         if(saintUpdateRequest.birthYear() != null) {
             currentSaint.setBirthYear(saintUpdateRequest.birthYear());
+            updated = true;
         }
         if(saintUpdateRequest.deathYear() != null) {
             currentSaint.setDeathYear(saintUpdateRequest.deathYear());
+            updated = true;
         }
         if(saintUpdateRequest.feastDay() != null) {
             currentSaint.setFeastDay(saintUpdateRequest.feastDay());
+            updated = true;
         }
-        if(saintUpdateRequest.biography() != null) {
+        if(saintUpdateRequest.biography() != null && !saintUpdateRequest.biography().isEmpty()) {
             currentSaint.setBiography(saintUpdateRequest.biography());
+            updated = true;
         }
         if(saintUpdateRequest.canonizationYear() != null) {
             currentSaint.setCanonizationYear(saintUpdateRequest.canonizationYear());
+            updated = true;
         }
-        if(saintUpdateRequest.patronage() != null) {
+        if(saintUpdateRequest.patronage() != null && !saintUpdateRequest.patronage().isEmpty()) {
             currentSaint.setPatronage(saintUpdateRequest.patronage());
+            updated = true;
         }
-        if(saintUpdateRequest.imageUrl() != null) {
+        if(saintUpdateRequest.imageUrl() != null && !saintUpdateRequest.imageUrl().isEmpty()) {
             currentSaint.setImageUrl(saintUpdateRequest.imageUrl());
+            updated = true;
         }
-        saintRepository.save(currentSaint);
+
+        if(updated) {
+            saintRepository.save(currentSaint);
+        }
         return SaintDtoMapper.toSaintDto(currentSaint);
     }
 

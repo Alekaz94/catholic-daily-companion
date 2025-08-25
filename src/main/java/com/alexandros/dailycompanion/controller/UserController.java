@@ -1,5 +1,6 @@
 package com.alexandros.dailycompanion.controller;
 
+import com.alexandros.dailycompanion.dto.PageResponse;
 import com.alexandros.dailycompanion.dto.UserDto;
 import com.alexandros.dailycompanion.dto.UserRequest;
 import com.alexandros.dailycompanion.dto.UserUpdateRequest;
@@ -28,13 +29,22 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<UserDto>> getAllUsers(@RequestParam(required = false, defaultValue = "") String query,
-                                                     @RequestParam(defaultValue = "0") int page,
-                                                     @RequestParam(defaultValue = "5") int size,
-                                                     @RequestParam(defaultValue = "email") String sortBy,
-                                                     @RequestParam(defaultValue = "asc") String sortDir) {
+    public ResponseEntity<PageResponse<UserDto>> getAllUsers(@RequestParam(required = false, defaultValue = "") String query,
+                                                             @RequestParam(defaultValue = "0") int page,
+                                                             @RequestParam(defaultValue = "5") int size,
+                                                             @RequestParam(defaultValue = "email") String sortBy,
+                                                             @RequestParam(defaultValue = "asc") String sortDir) {
         Page<UserDto> users = userService.getAllUsers(query, page, size, sortBy, sortDir);
-        return ResponseEntity.ok(users);
+
+        PageResponse<UserDto> response = new PageResponse<>(
+                users.getContent(),
+                users.getNumber(),
+                users.getSize(),
+                users.getTotalElements(),
+                users.getTotalPages(),
+                users.isLast()
+        );
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{userId}")
