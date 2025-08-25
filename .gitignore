@@ -40,3 +40,6 @@ build/
 
 # Firebase service account
 src/main/resources/firebase/ServiceAccountKey.json
+
+# Images
+src/main/resources/static/images/**
