@@ -3,6 +3,7 @@ package com.alexandros.dailycompanion.controller;
 import com.alexandros.dailycompanion.dto.LoginResponse;
 import com.alexandros.dailycompanion.service.FirebaseAuthService;
 import com.google.firebase.auth.FirebaseAuthException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +19,7 @@ public class FirebaseAuthController {
 
     private final FirebaseAuthService firebaseAuthService;
 
+    @Autowired
     public FirebaseAuthController(FirebaseAuthService firebaseAuthService) {
         this.firebaseAuthService = firebaseAuthService;
     }
