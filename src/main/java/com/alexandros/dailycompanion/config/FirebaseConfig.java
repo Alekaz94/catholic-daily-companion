@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -15,7 +16,11 @@ public class FirebaseConfig {
 
     @PostConstruct
     public void initFirebase() throws IOException {
-        InputStream serviceAccount = new FileInputStream("firebase/ServiceAccountKey.json");
+        InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("firebase/ServiceAccountKey.json");
+
+        if(serviceAccount == null) {
+            throw new FileNotFoundException("firebase/ServiceAccountKey.json not found in classpath");
+        }
 
         FirebaseOptions options = FirebaseOptions
                 .builder()

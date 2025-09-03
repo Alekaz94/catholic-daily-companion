@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.io.FileNotFoundException;
 import java.nio.file.AccessDeniedException;
 import java.util.stream.Collectors;
 
@@ -49,5 +50,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<String> handleIllegalState(IllegalStateException illegalStateException) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(illegalStateException.getMessage());
+    }
+
+    @ExceptionHandler(FileNotFoundException.class)
+    public ResponseEntity<String> handleFileNotFound(FileNotFoundException fileNotFoundException) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(fileNotFoundException.getMessage());
     }
 }
