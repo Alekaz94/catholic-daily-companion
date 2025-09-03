@@ -31,7 +31,7 @@ public class FirebaseAuthService {
 
     public LoginResponse verifyFirebaseTokenAndLogin(String idToken) throws FirebaseAuthException {
         FirebaseToken decodedFirebaseToken = firebaseAuth.verifyIdToken(idToken);
-        String email = decodedFirebaseToken.getEmail();
+        String email = decodedFirebaseToken.getEmail().toLowerCase();
 
         Optional<User> optionalUser = userRepository.findByEmail(email);
 
