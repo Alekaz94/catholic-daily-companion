@@ -10,6 +10,7 @@ import com.alexandros.dailycompanion.security.JwtUtil;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -39,13 +40,18 @@ public class FirebaseAuthService {
         if(optionalUser.isPresent()) {
             user = optionalUser.get();
         } else {
-            user = new User();
-            user.setEmail(email);
-            user.setFirstName(decodedFirebaseToken.getName() != null ? decodedFirebaseToken.getName() : "User");
-            user.setRole(Roles.USER);
-            user.setCreatedAt(LocalDate.now());
-            user.setUpdatedAt(LocalDate.now());
-            userRepository.save(user);
+            try {
+                user = new User();
+                user.setEmail(email);
+                user.setFirstName(decodedFirebaseToken.getName() != null ? decodedFirebaseToken.getName() : "User");
+                user.setRole(Roles.USER);
+                user.setCreatedAt(LocalDate.now());
+                user.setUpdatedAt(LocalDate.now());
+                userRepository.save(user);
+            } catch (DataIntegrityViolationException e) {
+                user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new IllegalStateException("User was just created but cant be found."));
+            }
         }
 
         String token = jwtUtil.generateToken(user.getEmail());
