@@ -154,7 +154,7 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(email)
                 .map(user -> new org.springframework.security.core.userdetails.User(
                         user.getEmail(),
-                        user.getPassword(),
+                        user.getPassword() != null ? user.getPassword() : "",
                         List.of(new SimpleGrantedAuthority(user.getRole().toString()))
                 ))
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
