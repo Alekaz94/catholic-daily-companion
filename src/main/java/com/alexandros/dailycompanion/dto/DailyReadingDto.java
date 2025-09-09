@@ -1,3 +1,4 @@
+/*
 package com.alexandros.dailycompanion.dto;
 
 import java.time.LocalDate;
@@ -10,3 +11,4 @@ public record DailyReadingDto(UUID id,
                               String psalm,
                               String gospel) {
 }
+*/

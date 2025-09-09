@@ -1,3 +1,4 @@
+/*
 package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.*;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,6 +42,15 @@ public class DailyReadingController {
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/week")
+    public ResponseEntity<List<DailyReadingDto>> getNextSevenDays() {
+        LocalDate today = LocalDate.now();
+        LocalDate end = today.plusDays(6);
+
+        List<DailyReadingDto> readings = dailyReadingService.getReadingsBetween(today, end);
+        return ResponseEntity.ok(readings);
     }
 
     @GetMapping("/{readingId}")
@@ -73,3 +84,4 @@ public class DailyReadingController {
         return ResponseEntity.noContent().build();
     }
 }
+*/

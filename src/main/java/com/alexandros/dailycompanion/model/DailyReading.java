@@ -1,3 +1,4 @@
+/*
 package com.alexandros.dailycompanion.model;
 
 import jakarta.persistence.*;
@@ -31,3 +32,4 @@ public class DailyReading {
     @Column(columnDefinition = "TEXT")
     private String gospel;
 }
+*/

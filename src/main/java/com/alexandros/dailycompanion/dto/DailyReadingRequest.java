@@ -1,3 +1,4 @@
+/*
 package com.alexandros.dailycompanion.dto;
 
 import jakarta.validation.constraints.NotNull;
@@ -7,3 +8,4 @@ public record DailyReadingRequest(@NotNull String firstReading,
                                   @NotNull String psalm,
                                   @NotNull String gospel) {
 }
+*/

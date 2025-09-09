@@ -1,3 +1,4 @@
+/*
 package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.DailyReadingDto;
@@ -88,5 +89,13 @@ public class DailyReadingService {
         DailyReading dailyReading = serviceHelper.getDailyReadingById(readingId);
         dailyReadingRepository.deleteById(dailyReading.getId());
     }
+
+    public List<DailyReadingDto> getReadingsBetween(LocalDate start, LocalDate end) {
+        List<DailyReading> readings = dailyReadingRepository.findByCreatedAtBetween(start, end);
+        return readings.stream()
+                .map(DailyReadingDtoMapper::toDailyReadingDto)
+                .toList();
+    }
 }
 
+*/

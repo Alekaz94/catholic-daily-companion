@@ -1,3 +1,4 @@
+/*
 package com.alexandros.dailycompanion.mapper;
 
 import com.alexandros.dailycompanion.dto.DailyReadingDto;
@@ -30,3 +31,4 @@ public class DailyReadingDtoMapper {
         return dailyReadings.map(DailyReadingDtoMapper::toDailyReadingDto);
     }
 }
+*/
