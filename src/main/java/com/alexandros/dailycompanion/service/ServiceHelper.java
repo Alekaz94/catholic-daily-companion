@@ -18,15 +18,19 @@ public class ServiceHelper {
 
     private final UserRepository userRepository;
     private final SaintRepository saintRepository;
-    private final DailyReadingRepository dailyReadingRepository;
+//    private final DailyReadingRepository dailyReadingRepository;
     private final JournalEntryRepository journalEntryRepository;
     private final RosaryLogRepository rosaryLogRepository;
 
     @Autowired
-    public ServiceHelper(UserRepository userRepository, SaintRepository saintRepository, DailyReadingRepository dailyReadingRepository, JournalEntryRepository journalEntryRepository, RosaryLogRepository rosaryLogRepository) {
+    public ServiceHelper(UserRepository userRepository,
+                         SaintRepository saintRepository,
+    //                     DailyReadingRepository dailyReadingRepository,
+                         JournalEntryRepository journalEntryRepository,
+                         RosaryLogRepository rosaryLogRepository) {
         this.userRepository = userRepository;
         this.saintRepository = saintRepository;
-        this.dailyReadingRepository = dailyReadingRepository;
+        //this.dailyReadingRepository = dailyReadingRepository;
         this.journalEntryRepository = journalEntryRepository;
         this.rosaryLogRepository = rosaryLogRepository;
     }
@@ -59,10 +63,10 @@ public class ServiceHelper {
         return entry;
     }
 
-    public DailyReading getDailyReadingById(UUID id) {
+/*    public DailyReading getDailyReadingById(UUID id) {
         return dailyReadingRepository.findById(id).orElseThrow(() ->
                 new IllegalArgumentException(String.format("Could not find daily reading with id: %s", id)));
-    }
+    }*/
 
     private boolean isOwnerOrAdmin(JournalEntry entry, User user) {
         return user.getRole().equals(Roles.ADMIN) || entry.getUser().getId().equals(user.getId());
