@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,7 +27,7 @@ public class RosaryLogService {
     }
 
     public RosaryLogDto markCompleted(UUID userId) {
-        LocalDate date = LocalDate.now();
+        LocalDate date = ZonedDateTime.now(ZoneOffset.UTC).toLocalDate();
         User user = serviceHelper.getUserByIdOrThrow(userId);
 
         RosaryLog rosaryLog = rosaryLogRepository
@@ -38,7 +40,7 @@ public class RosaryLogService {
     }
 
     public boolean isCompletedToday(UUID userId) {
-        LocalDate date = LocalDate.now();
+        LocalDate date = ZonedDateTime.now(ZoneOffset.UTC).toLocalDate();
         return rosaryLogRepository
                 .findByUserIdAndDate(userId, date)
                 .map(RosaryLog::isCompleted)
@@ -53,7 +55,7 @@ public class RosaryLogService {
     public int getStreak(UUID userId) {
         List<RosaryLog> logs = rosaryLogRepository.findAllByUserIdAndCompletedTrueOrderByDateDesc(userId);
         int streak = 0;
-        LocalDate expectedDate = LocalDate.now();
+        LocalDate expectedDate = ZonedDateTime.now(ZoneOffset.UTC).toLocalDate();
 
         for(RosaryLog log : logs) {
             if(log.getDate().isEqual(expectedDate)) {
