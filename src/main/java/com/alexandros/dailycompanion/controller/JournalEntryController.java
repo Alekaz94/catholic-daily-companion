@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,6 +51,22 @@ public class JournalEntryController {
     @GetMapping("/{entryId}")
     public ResponseEntity<JournalEntryDto> getEntryById(@PathVariable UUID entryId) throws AccessDeniedException {
         JournalEntryDto entry = journalEntryService.getEntryById(entryId);
+        return ResponseEntity.ok(entry);
+    }
+
+    @GetMapping("/dates")
+    public ResponseEntity<List<String>> getJournalEntryDates() {
+        List<String> dates = journalEntryService.getEntryDates()
+                .stream()
+                .map(LocalDate::toString)
+                .toList();
+        return ResponseEntity.ok(dates);
+    }
+
+    @GetMapping("/dates/{date}")
+    public ResponseEntity<List<JournalEntryDto>> getEntryByDate(@PathVariable String date) {
+        LocalDate localDate = LocalDate.parse(date);
+        List<JournalEntryDto> entry = journalEntryService.getEntriesByDate(localDate);
         return ResponseEntity.ok(entry);
     }
 

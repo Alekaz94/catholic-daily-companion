@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.time.MonthDay;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,4 +20,6 @@ public interface SaintRepository extends JpaRepository<Saint, UUID> {
     Optional<Saint> findByPatronage(String patronage);
 
     Page<Saint> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
+    List<Saint> findAllByFeastDay(MonthDay monthDay);
 }

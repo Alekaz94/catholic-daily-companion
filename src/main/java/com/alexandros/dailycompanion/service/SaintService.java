@@ -14,8 +14,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.MonthDay;
-import java.util.UUID;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class SaintService {
@@ -112,5 +115,44 @@ public class SaintService {
     public void deleteSaint(UUID saintId) {
         Saint saint = serviceHelper.getSaintById(saintId);
         saintRepository.deleteById(saint.getId());
+    }
+
+    public Map<String, List<String>> getSaintsByMonth(int year, int month) {
+        List<Saint> saints = saintRepository.findAll();
+
+        return saints.stream()
+                .filter(saint -> saint.getFeastDay() != null &&
+                        saint.getFeastDay().getMonthValue() == month)
+                .collect(Collectors.groupingBy(
+                        saint -> saint.getFeastDay().toString(),
+                        Collectors.mapping(Saint::getName, Collectors.toList())
+                ));
+    }
+
+    public List<SaintDto> getAllSaintsByFeastCode(String feastCode) {
+        MonthDay feastDay = MonthDay.parse("--" + feastCode);
+        List<Saint> saints = saintRepository.findAllByFeastDay(feastDay);
+
+        if (saints.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return saints.stream()
+                .map(SaintDtoMapper::toSaintDto)
+                .toList();
+    }
+
+    public Map<String, List<String>> getAllFeastDaysMapped() {
+        List<Saint> saints = saintRepository.findAll();
+        Map<String, List<String>> feastMap = new HashMap<>();
+
+        for(Saint saint : saints) {
+            if(saint.getFeastDay() == null) {
+                continue;
+            }
+            String feastCode = String.format("%02d-%02d", saint.getFeastDay().getMonthValue(), saint.getFeastDay().getDayOfMonth());
+            feastMap.computeIfAbsent(feastCode, k -> new ArrayList<>()).add(saint.getName());
+        }
+        return feastMap;
     }
 }

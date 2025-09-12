@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -54,6 +56,24 @@ public class SaintController {
     public ResponseEntity<SaintDto> getTodaysSaint() {
         SaintDto saint = saintService.getSaintByFeastDay();
         return ResponseEntity.ok(saint);
+    }
+
+    @GetMapping("/feast/{feastCode}")
+    public ResponseEntity<List<SaintDto>> getSaintByFeastCode(@PathVariable String feastCode) {
+        List<SaintDto> saints = saintService.getAllSaintsByFeastCode(feastCode);
+        return ResponseEntity.ok(saints);
+    }
+
+    @GetMapping("/feast")
+    public ResponseEntity<Map<String, List<String>>> getAllFeastDays() {
+        Map<String, List<String>> feastMap = saintService.getAllFeastDaysMapped();
+        return ResponseEntity.ok(feastMap);
+    }
+
+    @GetMapping("/month/{year}/{month}")
+    public ResponseEntity<Map<String, List<String>>> getSaintsByMonth(@PathVariable int year, @PathVariable int month) {
+        Map<String, List<String>> saints = saintService.getSaintsByMonth(year, month);
+        return ResponseEntity.ok(saints);
     }
 
     @PostMapping

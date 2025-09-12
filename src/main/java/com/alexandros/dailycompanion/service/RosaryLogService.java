@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
@@ -67,5 +68,16 @@ public class RosaryLogService {
         }
 
         return streak;
+    }
+
+    public List<LocalDate> getCompletedDates(UUID userId) {
+        return rosaryLogRepository.findAllByUserIdAndCompletedTrue(userId)
+                .stream()
+                .map(RosaryLog::getDate)
+                .toList();
+    }
+
+    public boolean isCompletedOn(UUID userId, LocalDate date) {
+        return rosaryLogRepository.existsByUserIdAndDate(userId, date);
     }
 }

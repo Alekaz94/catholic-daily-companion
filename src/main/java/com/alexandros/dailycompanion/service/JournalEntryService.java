@@ -1,5 +1,6 @@
 package com.alexandros.dailycompanion.service;
 
+import ch.qos.logback.classic.Logger;
 import com.alexandros.dailycompanion.dto.JournalEntryDto;
 import com.alexandros.dailycompanion.dto.JournalEntryRequest;
 import com.alexandros.dailycompanion.dto.JournalEntryUpdateRequest;
@@ -16,13 +17,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -106,5 +106,34 @@ public class JournalEntryService {
     public void deleteJournalEntry(UUID entryId) throws AccessDeniedException {
         JournalEntry entry = serviceHelper.getJournalEntryForCurrentUser(entryId);
         journalEntryRepository.deleteById(entry.getId());
+    }
+
+    public List<LocalDate> getEntryDates() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = serviceHelper.getUserByEmail(email);
+
+        List<JournalEntry> entries = journalEntryRepository.findAllByUserId(user.getId());
+
+        if(entries.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return entries
+                .stream()
+                .map(JournalEntry::getCreatedAt)
+                .toList();
+    }
+
+    public List<JournalEntryDto> getEntriesByDate(LocalDate date) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        List<JournalEntry> entries = journalEntryRepository.findEntriesByUserEmailAndCreatedAt(email, date);
+
+        if(entries.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return entries.stream()
+                .map(JournalEntryDtoMapper::toJournalEntryDto)
+                .toList();
     }
 }

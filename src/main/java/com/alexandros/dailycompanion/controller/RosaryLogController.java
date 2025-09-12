@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,5 +43,21 @@ public class RosaryLogController {
     public ResponseEntity<Integer> getStreak(@PathVariable UUID userId) {
         int streak = rosaryLogService.getStreak(userId);
         return ResponseEntity.ok(streak);
+    }
+
+    @GetMapping("/{userId}/rosary-dates")
+    public ResponseEntity<List<String>> getRosaryDates(@PathVariable UUID userId) {
+        List<String> completedDates = rosaryLogService.getCompletedDates(userId)
+                .stream()
+                .map(LocalDate::toString)
+                .toList();
+        return ResponseEntity.ok(completedDates);
+    }
+
+    @GetMapping("/{userId}/completed-on/{date}")
+    public ResponseEntity<Boolean> isCompletedOn(@PathVariable UUID userId, @PathVariable String date) {
+        LocalDate localDate = LocalDate.parse(date);
+        boolean completed = rosaryLogService.isCompletedOn(userId, localDate);
+        return ResponseEntity.ok(completed);
     }
 }
