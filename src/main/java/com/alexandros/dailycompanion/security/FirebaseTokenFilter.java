@@ -1,3 +1,4 @@
+/*
 package com.alexandros.dailycompanion.security;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -66,3 +67,4 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
+*/

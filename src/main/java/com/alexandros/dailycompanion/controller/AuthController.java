@@ -34,7 +34,7 @@ public class AuthController {
     @PostMapping("/sign-up")
     public ResponseEntity<SignupResponse> signUpUser(@Valid @RequestBody UserRequest userRequest) {
         UserDto user = userService.signUp(userRequest);
-        String token = jwtUtil.generateToken(user.email());
+        String token = jwtUtil.generateToken(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(new SignupResponse(user, token));
     }
 }

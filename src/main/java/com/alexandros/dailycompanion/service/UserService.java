@@ -10,6 +10,7 @@ import com.alexandros.dailycompanion.security.PasswordUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -73,7 +74,8 @@ public class UserService implements UserDetailsService {
     }
 
     public UserDto createUser(@Valid UserRequest userRequest) {
-        Optional<User> existingUser = userRepository.findByEmail(userRequest.email());
+        String email = userRequest.email().toLowerCase();
+        Optional<User> existingUser = userRepository.findByEmail(email);
         if(existingUser.isPresent()) {
             throw new IllegalArgumentException("Email is already in use!");
         }
@@ -81,7 +83,7 @@ public class UserService implements UserDetailsService {
         User user = new User();
         user.setFirstName(userRequest.firstName());
         user.setLastName(userRequest.lastName());
-        user.setEmail(userRequest.email());
+        user.setEmail(email);
         user.setPassword(PasswordUtil.hashPassword(userRequest.password()));
         user.setCreatedAt(LocalDate.now());
         user.setUpdatedAt(LocalDate.now());
@@ -116,30 +118,38 @@ public class UserService implements UserDetailsService {
     public LoginResponse login(@Valid LoginRequest loginRequest) {
         Authentication auth = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password()));
+
         UserDetails userDetails = (UserDetails) auth.getPrincipal();
-        String token = jwtUtil.generateToken(userDetails.getUsername());
+
         User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("No user found!"));
+
         UserDto userDto = UserDtoMapper.toUserDto(user);
+        String token = jwtUtil.generateToken(userDto);
 
         return new LoginResponse(userDto, token);
     }
 
     public UserDto signUp(@Valid UserRequest userRequest) {
-        if (userRepository.findByEmail(userRequest.email()).isPresent()) {
+        try{
+            String email = userRequest.email().toLowerCase();
+            if (userRepository.findByEmail(email).isPresent()) {
+                throw new IllegalArgumentException("Email already registered!");
+            }
+            User user = new User();
+            user.setFirstName(userRequest.firstName());
+            user.setLastName(userRequest.lastName());
+            user.setEmail(email);
+            user.setPassword(PasswordUtil.hashPassword(userRequest.password()));
+            user.setCreatedAt(LocalDate.now());
+            user.setUpdatedAt(LocalDate.now());
+            user.setRole(Roles.USER);
+
+            userRepository.save(user);
+            return UserDtoMapper.toUserDto(user);
+        } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("Email already registered!");
         }
-        User user = new User();
-        user.setFirstName(userRequest.firstName());
-        user.setLastName(userRequest.lastName());
-        user.setEmail(userRequest.email());
-        user.setPassword(PasswordUtil.hashPassword(userRequest.password()));
-        user.setCreatedAt(LocalDate.now());
-        user.setUpdatedAt(LocalDate.now());
-        user.setRole(Roles.USER);
-
-        userRepository.save(user);
-        return UserDtoMapper.toUserDto(user);
     }
 
     private User getAuthenticatedUser() {

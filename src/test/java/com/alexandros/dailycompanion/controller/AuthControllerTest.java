@@ -150,7 +150,7 @@ public class AuthControllerTest {
         String token = "jwt-token";
 
         when(userService.signUp(any(UserRequest.class))).thenReturn(userDto);
-        when(jwtUtil.generateToken(eq(userDto.email()))).thenReturn(token);
+        when(jwtUtil.generateToken(eq(userDto))).thenReturn(token);
 
         mockMvc.perform(post("/api/v1/auth/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)

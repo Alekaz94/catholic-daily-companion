@@ -1,6 +1,6 @@
 package com.alexandros.dailycompanion.config;
 
-import com.alexandros.dailycompanion.security.FirebaseTokenFilter;
+//import com.alexandros.dailycompanion.security.FirebaseTokenFilter;
 import com.alexandros.dailycompanion.security.JwtRequestFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -23,13 +23,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
-    private final FirebaseTokenFilter firebaseTokenFilter;
+//    private final FirebaseTokenFilter firebaseTokenFilter;
     private final JwtRequestFilter jwtRequestFilter;
 
     @Autowired
-    public SecurityConfig(UserDetailsService userDetailsService, FirebaseTokenFilter firebaseTokenFilter, JwtRequestFilter jwtRequestFilter) {
+    public SecurityConfig(UserDetailsService userDetailsService, JwtRequestFilter jwtRequestFilter) {
         this.userDetailsService = userDetailsService;
-        this.firebaseTokenFilter = firebaseTokenFilter;
+//        this.firebaseTokenFilter = firebaseTokenFilter;
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
@@ -45,6 +45,8 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/v1/saint/today").permitAll()
                                 //.requestMatchers(HttpMethod.GET, "/api/v1/daily-reading/today").permitAll()
                                 .requestMatchers(HttpMethod.GET,"/api/v1/saint/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                                .requestMatchers(HttpMethod.GET,"/api/v1/saint/feast/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                                .requestMatchers(HttpMethod.GET,"/api/v1/saint/month/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                                 .requestMatchers(HttpMethod.PUT,"/api/v1/saint/**").hasAuthority("ROLE_ADMIN")
                                 .requestMatchers(HttpMethod.POST,"/api/v1/saint/**").hasAuthority("ROLE_ADMIN")
                                 .requestMatchers(HttpMethod.DELETE,"/api/v1/saint/**").hasAuthority("ROLE_ADMIN")
@@ -53,6 +55,7 @@ public class SecurityConfig {
 //                                .requestMatchers(HttpMethod.POST,"/api/v1/daily-reading/**").hasAuthority("ROLE_ADMIN")
 //                                .requestMatchers(HttpMethod.DELETE,"/api/v1/daily-reading/**").hasAuthority("ROLE_ADMIN")
                                 .requestMatchers("/api/v1/journal-entry/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
+                                .requestMatchers(HttpMethod.GET,"/api/v1/journal-entry/dates/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/user").hasAuthority("ROLE_ADMIN")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/user/*").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                                 .requestMatchers(HttpMethod.PUT, "/api/v1/user/*").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
@@ -62,7 +65,7 @@ public class SecurityConfig {
                 )
                 .sessionManagement(sessions ->
                         sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
+//                .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
