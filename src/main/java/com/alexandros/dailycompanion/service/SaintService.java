@@ -142,6 +142,19 @@ public class SaintService {
                 .toList();
     }
 
+    public List<SaintDto> getAllSaintsByFeastDay() {
+        MonthDay today = MonthDay.now();
+        List<Saint> saints = saintRepository.findAllByFeastDay(today);
+
+        if(saints.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return saints.stream()
+                .map(SaintDtoMapper::toSaintDto)
+                .toList();
+    }
+
     public Map<String, List<String>> getAllFeastDaysMapped() {
         List<Saint> saints = saintRepository.findAll();
         Map<String, List<String>> feastMap = new HashMap<>();

@@ -67,7 +67,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID userId) {
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID userId) throws AccessDeniedException {
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
     }

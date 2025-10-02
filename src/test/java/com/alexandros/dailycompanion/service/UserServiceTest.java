@@ -184,7 +184,7 @@ public class UserServiceTest {
     }
 
     @Test
-    void deleteUserShouldDeleteUserById() {
+    void deleteUserShouldDeleteUserById() throws AccessDeniedException {
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
 
         userService.deleteUser(user.getId());

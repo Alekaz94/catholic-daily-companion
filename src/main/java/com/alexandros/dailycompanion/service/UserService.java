@@ -110,9 +110,12 @@ public class UserService implements UserDetailsService {
         return UserDtoMapper.toUserDto(user);
     }
 
-    public void deleteUser(UUID userId) {
-        User user = serviceHelper.getUserByIdOrThrow(userId);
-        userRepository.deleteById(user.getId());
+    public void deleteUser(UUID userId) throws AccessDeniedException {
+        User currentUser = getAuthenticatedUser();
+        if(!currentUser.getRole().equals(Roles.ADMIN) && !currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException("You are not allowed to this user's information");
+        }
+        userRepository.deleteById(currentUser.getId());
     }
 
     public LoginResponse login(@Valid LoginRequest loginRequest) {

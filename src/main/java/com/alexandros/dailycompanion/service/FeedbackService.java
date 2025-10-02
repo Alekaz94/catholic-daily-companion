@@ -1,0 +1,38 @@
+package com.alexandros.dailycompanion.service;
+
+import com.alexandros.dailycompanion.dto.FeedbackRequest;
+import com.alexandros.dailycompanion.model.Feedback;
+import com.alexandros.dailycompanion.model.User;
+import com.alexandros.dailycompanion.repository.FeedbackRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Service
+public class FeedbackService {
+
+    private final FeedbackRepository feedbackRepository;
+    private final ServiceHelper serviceHelper;
+
+    @Autowired
+    public FeedbackService(FeedbackRepository feedbackRepository, ServiceHelper serviceHelper) {
+        this.feedbackRepository = feedbackRepository;
+        this.serviceHelper = serviceHelper;
+    }
+
+    public void submitFeedback(UUID userId, FeedbackRequest feedbackRequest) {
+        Feedback feedback = new Feedback();
+        feedback.setCategory(feedbackRequest.category());
+        feedback.setMessage(feedbackRequest.message());
+        feedback.setEmail(feedbackRequest.email());
+        feedback.setSubmittedAt(LocalDateTime.now());
+
+        if(userId != null) {
+            User user = serviceHelper.getUserByIdOrThrow(userId);
+            feedback.setUser(user);
+        }
+        feedbackRepository.save(feedback);
+    }
+}

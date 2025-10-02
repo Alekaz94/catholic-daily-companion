@@ -53,8 +53,8 @@ public class SaintController {
     }
 
     @GetMapping("/today")
-    public ResponseEntity<SaintDto> getTodaysSaint() {
-        SaintDto saint = saintService.getSaintByFeastDay();
+    public ResponseEntity<List<SaintDto>> getTodaysSaint() {
+        List<SaintDto> saint = saintService.getAllSaintsByFeastDay();
         return ResponseEntity.ok(saint);
     }
 
