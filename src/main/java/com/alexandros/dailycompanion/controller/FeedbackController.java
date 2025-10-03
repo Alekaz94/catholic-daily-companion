@@ -1,5 +1,6 @@
 package com.alexandros.dailycompanion.controller;
 
+import com.alexandros.dailycompanion.dto.FeedbackDto;
 import com.alexandros.dailycompanion.dto.FeedbackRequest;
 import com.alexandros.dailycompanion.model.Feedback;
 import com.alexandros.dailycompanion.service.FeedbackService;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -28,5 +30,17 @@ public class FeedbackController {
                                             @RequestBody FeedbackRequest feedbackRequest) {
         feedbackService.submitFeedback(userId, feedbackRequest);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @GetMapping
+    public ResponseEntity<List<FeedbackDto>> getAllFeedback() {
+        List<FeedbackDto> feedbacks = feedbackService.getAllFeedback();
+        return ResponseEntity.ok(feedbacks);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<FeedbackDto> getSpecificFeedback(@PathVariable UUID id) {
+        FeedbackDto feedbackDto = feedbackService.getSpecificFeedback(id);
+        return ResponseEntity.ok(feedbackDto);
     }
 }
