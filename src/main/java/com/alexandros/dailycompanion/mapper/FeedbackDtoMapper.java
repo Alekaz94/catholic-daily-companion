@@ -17,7 +17,8 @@ public class FeedbackDtoMapper {
                 feedback.getCategory(),
                 feedback.getMessage(),
                 feedback.getEmail(),
-                feedback.getSubmittedAt()
+                feedback.getSubmittedAt(),
+                feedback.isFixed()
         );
     }
 

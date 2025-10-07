@@ -2,6 +2,7 @@ package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.FeedbackDto;
 import com.alexandros.dailycompanion.dto.FeedbackRequest;
+import com.alexandros.dailycompanion.dto.FeedbackUpdateRequest;
 import com.alexandros.dailycompanion.model.Feedback;
 import com.alexandros.dailycompanion.service.FeedbackService;
 import jakarta.transaction.Transactional;
@@ -43,4 +44,11 @@ public class FeedbackController {
         FeedbackDto feedbackDto = feedbackService.getSpecificFeedback(id);
         return ResponseEntity.ok(feedbackDto);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<FeedbackDto> updateIsFixed(@PathVariable UUID id, @RequestBody FeedbackUpdateRequest feedbackUpdateRequest) {
+        FeedbackDto feedbackDto = feedbackService.updateIsFixed(id, feedbackUpdateRequest);
+        return ResponseEntity.ok(feedbackDto);
+    }
+
 }

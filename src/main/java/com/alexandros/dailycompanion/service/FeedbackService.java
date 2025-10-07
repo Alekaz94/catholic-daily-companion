@@ -2,6 +2,7 @@ package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.FeedbackDto;
 import com.alexandros.dailycompanion.dto.FeedbackRequest;
+import com.alexandros.dailycompanion.dto.FeedbackUpdateRequest;
 import com.alexandros.dailycompanion.mapper.FeedbackDtoMapper;
 import com.alexandros.dailycompanion.model.Feedback;
 import com.alexandros.dailycompanion.model.User;
@@ -31,6 +32,7 @@ public class FeedbackService {
         feedback.setMessage(feedbackRequest.message());
         feedback.setEmail(feedbackRequest.email());
         feedback.setSubmittedAt(LocalDateTime.now());
+        feedback.setFixed(false);
 
         if(userId != null) {
             User user = serviceHelper.getUserByIdOrThrow(userId);
@@ -47,6 +49,16 @@ public class FeedbackService {
     public FeedbackDto getSpecificFeedback(UUID id) {
         Feedback feedback = feedbackRepository.findById(id).orElseThrow(()
                 -> new IllegalArgumentException("Could not find feedback!"));
+        return FeedbackDtoMapper.toFeedbackDto(feedback);
+    }
+
+    public FeedbackDto updateIsFixed(UUID id, FeedbackUpdateRequest feedbackUpdateRequest) {
+        Feedback feedback = feedbackRepository.findById(id).orElseThrow(()
+                -> new IllegalArgumentException("Could not find feedback!"));
+
+        feedback.setFixed(feedbackUpdateRequest.isFixed());
+        feedbackRepository.save(feedback);
+
         return FeedbackDtoMapper.toFeedbackDto(feedback);
     }
 }

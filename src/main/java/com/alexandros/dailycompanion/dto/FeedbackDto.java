@@ -7,5 +7,6 @@ public record FeedbackDto(UUID id,
                           String category,
                           String message,
                           String email,
-                          LocalDateTime submittedAt) {
+                          LocalDateTime submittedAt,
+                          boolean isFixed) {
 }

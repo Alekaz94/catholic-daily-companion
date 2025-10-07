@@ -23,6 +23,8 @@ public class Feedback {
     private String email;
     private LocalDateTime submittedAt;
 
+    private boolean isFixed;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
