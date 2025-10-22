@@ -1,7 +1,11 @@
 package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.*;
+import com.alexandros.dailycompanion.mapper.UserDtoMapper;
+import com.alexandros.dailycompanion.model.RefreshToken;
+import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.security.JwtUtil;
+import com.alexandros.dailycompanion.service.RefreshTokenService;
 import com.alexandros.dailycompanion.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +19,13 @@ import org.springframework.security.core.AuthenticationException;
 public class AuthController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
+
     @Autowired
-    public AuthController(UserService userService, JwtUtil jwtUtil) {
+    public AuthController(UserService userService, JwtUtil jwtUtil, RefreshTokenService refreshTokenService) {
         this.userService = userService;
         this.jwtUtil = jwtUtil;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @PostMapping("/login")
@@ -33,8 +40,37 @@ public class AuthController {
 
     @PostMapping("/sign-up")
     public ResponseEntity<SignupResponse> signUpUser(@Valid @RequestBody UserRequest userRequest) {
-        UserDto user = userService.signUp(userRequest);
-        String token = jwtUtil.generateToken(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new SignupResponse(user, token));
+        User user = userService.signUp(userRequest);
+        UserDto userDto = UserDtoMapper.toUserDto(user);
+
+        String token = jwtUtil.generateToken(userDto);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new SignupResponse(userDto, token, refreshToken.getToken()));
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
+        String requestRefreshToken = request.refreshToken();
+
+        return refreshTokenService.findByToken(requestRefreshToken)
+                .map(oldToken -> {
+                    try {
+                        refreshTokenService.verifyExpiration(oldToken);
+
+                        User user = oldToken.getUser();
+                        UserDto userDto = UserDtoMapper.toUserDto(user);
+
+                        refreshTokenService.deleteRefreshToken(oldToken);
+
+                        String newAccessToken = jwtUtil.generateToken(userDto);
+                        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user);
+
+                        return ResponseEntity.ok(new TokenRefreshResponse(newAccessToken, newRefreshToken.getToken()));
+                    } catch (RuntimeException e) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Expired refresh token. Please login again.");
+                    }
+                })
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token."));
     }
 }

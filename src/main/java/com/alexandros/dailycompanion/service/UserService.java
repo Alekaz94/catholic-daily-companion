@@ -3,6 +3,7 @@ package com.alexandros.dailycompanion.service;
 import com.alexandros.dailycompanion.dto.*;
 import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.UserDtoMapper;
+import com.alexandros.dailycompanion.model.RefreshToken;
 import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.repository.UserRepository;
 import com.alexandros.dailycompanion.security.JwtUtil;
@@ -41,13 +42,15 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final ServiceHelper serviceHelper;
+    private final RefreshTokenService refreshTokenService;
 
     @Autowired
-    public UserService(@Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil, ServiceHelper serviceHelper) {
+    public UserService(@Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil, ServiceHelper serviceHelper, RefreshTokenService refreshTokenService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.serviceHelper = serviceHelper;
+        this.refreshTokenService = refreshTokenService;
     }
 
     public Page<UserDto> getAllUsers(String query, int page, int size, String sortBy, String sortDir) {
@@ -129,11 +132,11 @@ public class UserService implements UserDetailsService {
 
         UserDto userDto = UserDtoMapper.toUserDto(user);
         String token = jwtUtil.generateToken(userDto);
-
-        return new LoginResponse(userDto, token);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        return new LoginResponse(userDto, token, refreshToken.getToken());
     }
 
-    public UserDto signUp(@Valid UserRequest userRequest) {
+    public User signUp(@Valid UserRequest userRequest) {
         try{
             String email = userRequest.email().toLowerCase();
             if (userRepository.findByEmail(email).isPresent()) {
@@ -149,7 +152,7 @@ public class UserService implements UserDetailsService {
             user.setRole(Roles.USER);
 
             userRepository.save(user);
-            return UserDtoMapper.toUserDto(user);
+            return user;
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("Email already registered!");
         }

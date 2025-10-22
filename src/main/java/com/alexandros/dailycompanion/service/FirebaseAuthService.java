@@ -4,6 +4,7 @@ import com.alexandros.dailycompanion.dto.LoginResponse;
 import com.alexandros.dailycompanion.dto.UserDto;
 import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.UserDtoMapper;
+import com.alexandros.dailycompanion.model.RefreshToken;
 import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.repository.UserRepository;
 import com.alexandros.dailycompanion.security.JwtUtil;
@@ -22,9 +23,10 @@ public class FirebaseAuthService {
     private final FirebaseAuth firebaseAuth;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenService refreshTokenService;
 
-
-    public FirebaseAuthService(UserRepository userRepository, JwtUtil jwtUtil) {
+    public FirebaseAuthService(UserRepository userRepository, JwtUtil jwtUtil, RefreshTokenService refreshTokenService) {
+        this.refreshTokenService = refreshTokenService;
         this.firebaseAuth = FirebaseAuth.getInstance();
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
@@ -35,19 +37,19 @@ public class FirebaseAuthService {
         String email = decodedFirebaseToken.getEmail().toLowerCase();
 
         Optional<User> optionalUser = userRepository.findByEmail(email);
-
         User user;
+
         if(optionalUser.isPresent()) {
             user = optionalUser.get();
         } else {
+            user = new User();
+            user.setEmail(email);
+            user.setFirstName(decodedFirebaseToken.getName() != null ? decodedFirebaseToken.getName() : "User");
+            user.setRole(Roles.USER);
+            user.setCreatedAt(LocalDate.now());
+            user.setUpdatedAt(LocalDate.now());
             try {
-                user = new User();
-                user.setEmail(email);
-                user.setFirstName(decodedFirebaseToken.getName() != null ? decodedFirebaseToken.getName() : "User");
-                user.setRole(Roles.USER);
-                user.setCreatedAt(LocalDate.now());
-                user.setUpdatedAt(LocalDate.now());
-                userRepository.save(user);
+                user = userRepository.save(user);
             } catch (DataIntegrityViolationException e) {
                 user = userRepository.findByEmail(email)
                         .orElseThrow(() -> new IllegalStateException("User was just created but cant be found."));
@@ -56,7 +58,7 @@ public class FirebaseAuthService {
 
         UserDto userDto = UserDtoMapper.toUserDto(user);
         String token = jwtUtil.generateToken(userDto);
-
-        return new LoginResponse(userDto, token);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        return new LoginResponse(userDto, token, refreshToken.getToken());
     }
 }
