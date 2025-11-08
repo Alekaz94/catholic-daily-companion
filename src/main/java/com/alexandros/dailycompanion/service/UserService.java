@@ -9,6 +9,7 @@ import com.alexandros.dailycompanion.repository.UserRepository;
 import com.alexandros.dailycompanion.security.JwtUtil;
 import com.alexandros.dailycompanion.security.PasswordUtil;
 import jakarta.validation.Valid;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -108,6 +109,30 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("Current password is incorrect!");
         }
         user.setPassword(PasswordUtil.hashPassword(userUpdateRequest.newPassword()));
+        user.setUpdatedAt(LocalDate.now());
+        userRepository.save(user);
+        return UserDtoMapper.toUserDto(user);
+    }
+
+    public UserDto updateUserName(UUID userId, UserNameUpdateRequest userNameUpdateRequest) throws AccessDeniedException, BadRequestException {
+        User currentUser = getAuthenticatedUser();
+        if(!currentUser.getRole().equals(Roles.ADMIN) && !currentUser.getId().equals(userId)) {
+            throw new AccessDeniedException("You are not allowed to this user's information");
+        }
+
+        if (userNameUpdateRequest.firstName() == null && userNameUpdateRequest.lastName() == null) {
+            throw new BadRequestException("At least one field must be provided to update.");
+        }
+
+        User user = serviceHelper.getUserByIdOrThrow(userId);
+
+        if(userNameUpdateRequest.firstName() != null) {
+            user.setFirstName(userNameUpdateRequest.firstName().trim());
+        }
+        if(userNameUpdateRequest.lastName() != null) {
+            user.setLastName(userNameUpdateRequest.lastName().trim());
+        }
+
         user.setUpdatedAt(LocalDate.now());
         userRepository.save(user);
         return UserDtoMapper.toUserDto(user);

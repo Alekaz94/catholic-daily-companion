@@ -63,6 +63,14 @@ public class JournalEntryService {
         return JournalEntryDtoMapper.toJournalEntryDto(entries);
     }
 
+    public List<JournalEntryDto> getAllJournalEntriesForUserNotPaged(UUID userId) {
+        User user = serviceHelper.getUserByIdOrThrow(userId);
+
+        List<JournalEntry> entries = journalEntryRepository.findAllByUserId(user.getId());
+
+        return JournalEntryDtoMapper.toJournalEntryDto(entries);
+    }
+
     public JournalEntryDto getEntryById(UUID entryId) throws AccessDeniedException {
         JournalEntry entry = serviceHelper.getJournalEntryForCurrentUser(entryId);
         return JournalEntryDtoMapper.toJournalEntryDto(entry);

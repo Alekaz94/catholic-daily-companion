@@ -1,6 +1,7 @@
 package com.alexandros.dailycompanion.exception;
 
 import jakarta.persistence.EntityNotFoundException;
+import org.apache.coyote.BadRequestException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<String> handleEntityNotFound(EntityNotFoundException notFoundException) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(notFoundException.getMessage());
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<String> handleBadRequest(BadRequestException badRequestException) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(badRequestException.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
