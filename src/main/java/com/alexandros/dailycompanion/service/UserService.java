@@ -1,6 +1,7 @@
 package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.*;
+import com.alexandros.dailycompanion.enums.AuditAction;
 import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.UserDtoMapper;
 import com.alexandros.dailycompanion.model.RefreshToken;
@@ -10,6 +11,8 @@ import com.alexandros.dailycompanion.security.JwtUtil;
 import com.alexandros.dailycompanion.security.PasswordUtil;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -38,7 +41,8 @@ import java.util.UUID;
 
 @Service
 public class UserService implements UserDetailsService {
-
+    private final static Logger logger = LoggerFactory.getLogger(UserService.class);
+    private final AuditLogService auditLogService;
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
@@ -46,7 +50,8 @@ public class UserService implements UserDetailsService {
     private final RefreshTokenService refreshTokenService;
 
     @Autowired
-    public UserService(@Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil, ServiceHelper serviceHelper, RefreshTokenService refreshTokenService) {
+    public UserService(AuditLogService auditLogService, @Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil, ServiceHelper serviceHelper, RefreshTokenService refreshTokenService) {
+        this.auditLogService = auditLogService;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
@@ -68,7 +73,7 @@ public class UserService implements UserDetailsService {
     }
 
     public UserDto getUser(UUID userId) throws AccessDeniedException {
-        User currentUser = getAuthenticatedUser();
+        User currentUser = serviceHelper.getAuthenticatedUser();
         if(!currentUser.getRole().equals(Roles.ADMIN) && !currentUser.getId().equals(userId)) {
             throw new AccessDeniedException("You are not allowed to this user's information");
         }
@@ -77,7 +82,8 @@ public class UserService implements UserDetailsService {
         return UserDtoMapper.toUserDto(user);
     }
 
-    public UserDto createUser(@Valid UserRequest userRequest) {
+    public UserDto createUser(@Valid UserRequest userRequest,
+                              String ipAddress) {
         String email = userRequest.email().toLowerCase();
         Optional<User> existingUser = userRepository.findByEmail(email);
         if(existingUser.isPresent()) {
@@ -93,11 +99,23 @@ public class UserService implements UserDetailsService {
         user.setUpdatedAt(LocalDate.now());
         user.setRole(Roles.USER);
         userRepository.save(user);
+
+        auditLogService.logAction(user.getId(),
+                AuditAction.CREATE_USER.name(),
+                "User",
+                user.getId(),
+                String.format("{\"ID\": \"%s\"}", user.getId()),
+                ipAddress
+        );
+        logger.info("Created user account '{}'", user.getId());
+
         return UserDtoMapper.toUserDto(user);
     }
 
-    public UserDto updateUserPassword(UUID userId, @Valid UserUpdateRequest userUpdateRequest) throws AccessDeniedException {
-        User currentUser = getAuthenticatedUser();
+    public UserDto updateUserPassword(UUID userId,
+                                      @Valid UserUpdateRequest userUpdateRequest,
+                                      String ipAddress) throws AccessDeniedException {
+        User currentUser = serviceHelper.getAuthenticatedUser();
         if(!currentUser.getRole().equals(Roles.ADMIN) && !currentUser.getId().equals(userId)) {
             throw new AccessDeniedException("You are not allowed to this user's information");
         }
@@ -111,11 +129,24 @@ public class UserService implements UserDetailsService {
         user.setPassword(PasswordUtil.hashPassword(userUpdateRequest.newPassword()));
         user.setUpdatedAt(LocalDate.now());
         userRepository.save(user);
+
+        auditLogService.logAction(
+                user.getId(),
+                AuditAction.UPDATE_USER_PASSWORD.name(),
+                "User",
+                user.getId(),
+                "{\"passwordChange\": true}",
+                ipAddress
+        );
+
+        logger.info("Updated password for user '{}'", user.getId());
         return UserDtoMapper.toUserDto(user);
     }
 
-    public UserDto updateUserName(UUID userId, UserNameUpdateRequest userNameUpdateRequest) throws AccessDeniedException, BadRequestException {
-        User currentUser = getAuthenticatedUser();
+    public UserDto updateUserName(UUID userId,
+                                  UserNameUpdateRequest userNameUpdateRequest,
+                                  String ipAddress) throws AccessDeniedException, BadRequestException {
+        User currentUser = serviceHelper.getAuthenticatedUser();
         if(!currentUser.getRole().equals(Roles.ADMIN) && !currentUser.getId().equals(userId)) {
             throw new AccessDeniedException("You are not allowed to this user's information");
         }
@@ -135,14 +166,36 @@ public class UserService implements UserDetailsService {
 
         user.setUpdatedAt(LocalDate.now());
         userRepository.save(user);
+
+        auditLogService.logAction(
+                user.getId(),
+                AuditAction.UPDATE_USER_NAME.name(),
+                "User",
+                user.getId(),
+                String.format("{\"nameChange\": \"true\"}"),
+                ipAddress
+        );
+
+        logger.info("Updated name for user '{}'", user.getId());
         return UserDtoMapper.toUserDto(user);
     }
 
-    public void deleteUser(UUID userId) throws AccessDeniedException {
-        User currentUser = getAuthenticatedUser();
+    public void deleteUser(UUID userId, String ipAddress) throws AccessDeniedException {
+        User currentUser = serviceHelper.getAuthenticatedUser();
         if(!currentUser.getRole().equals(Roles.ADMIN) && !currentUser.getId().equals(userId)) {
             throw new AccessDeniedException("You are not allowed to this user's information");
         }
+
+        auditLogService.logAction(
+                currentUser.getId(),
+                AuditAction.DELETE_USER.name(),
+                "User",
+                currentUser.getId(),
+                "{}",
+                ipAddress
+        );
+
+        logger.warn("Deleted user '{}'", currentUser.getId());
         userRepository.deleteById(currentUser.getId());
     }
 
@@ -181,13 +234,6 @@ public class UserService implements UserDetailsService {
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("Email already registered!");
         }
-    }
-
-    private User getAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        return userRepository.findByEmail(email).orElseThrow(() ->
-                new UsernameNotFoundException("Authenticated user not found!"));
     }
 
     @Override
