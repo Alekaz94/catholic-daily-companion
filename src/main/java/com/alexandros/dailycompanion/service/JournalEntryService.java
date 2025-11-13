@@ -1,17 +1,17 @@
 package com.alexandros.dailycompanion.service;
 
-import ch.qos.logback.classic.Logger;
 import com.alexandros.dailycompanion.dto.JournalEntryDto;
 import com.alexandros.dailycompanion.dto.JournalEntryRequest;
 import com.alexandros.dailycompanion.dto.JournalEntryUpdateRequest;
+import com.alexandros.dailycompanion.enums.AuditAction;
 import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.JournalEntryDtoMapper;
 import com.alexandros.dailycompanion.model.JournalEntry;
 import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.repository.JournalEntryRepository;
-import com.alexandros.dailycompanion.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
@@ -28,38 +29,33 @@ import java.util.UUID;
 
 @Service
 public class JournalEntryService {
+    private final static Logger logger = LoggerFactory.getLogger(JournalEntryService.class);
     private final JournalEntryRepository journalEntryRepository;
     private final ServiceHelper serviceHelper;
+    private final AuditLogService auditLogService;
 
     @Autowired
-    public JournalEntryService(JournalEntryRepository journalEntryRepository, ServiceHelper serviceHelper) {
+    public JournalEntryService(JournalEntryRepository journalEntryRepository, ServiceHelper serviceHelper, AuditLogService auditLogService) {
         this.journalEntryRepository = journalEntryRepository;
         this.serviceHelper = serviceHelper;
+        this.auditLogService = auditLogService;
     }
 
     public Page<JournalEntryDto> getAllJournalEntriesForUser(int page, int size, String sort) {
-        Sort.Direction direction;
-
-        if("asc".equalsIgnoreCase(sort)) {
-            direction = Sort.Direction.ASC;
-        } else if ("desc".equalsIgnoreCase(sort)) {
-            direction = Sort.Direction.DESC;
-        } else {
-            direction = Sort.Direction.DESC;
-        }
+        Sort.Direction direction = Sort.Direction.fromOptionalString(sort).orElse(Sort.Direction.DESC);
 
         Sort sortBy = Sort.by(direction, "updatedAt").and(Sort.by(direction, "createdAt"));
         Pageable pageable = PageRequest.of(page, size, sortBy);
 
         Page<JournalEntry> entries;
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = serviceHelper.getUserByEmail(email);
+        User user = serviceHelper.getAuthenticatedUser();
 
         if(user.getRole().equals(Roles.ADMIN)) {
             entries = journalEntryRepository.findAll(pageable);
         } else  {
             entries = journalEntryRepository.findAllByUserId(user.getId(), pageable);
         }
+        logger.debug("Fetched {} journal entries for user {}", entries.getTotalElements(), user.getId());
         return JournalEntryDtoMapper.toJournalEntryDto(entries);
     }
 
@@ -73,13 +69,15 @@ public class JournalEntryService {
 
     public JournalEntryDto getEntryById(UUID entryId) throws AccessDeniedException {
         JournalEntry entry = serviceHelper.getJournalEntryForCurrentUser(entryId);
+        logger.debug("Fetched journal entry {} for user {}", entryId, entry.getUser().getId());
         return JournalEntryDtoMapper.toJournalEntryDto(entry);
     }
 
-    public JournalEntryDto createJournalEntry(@Valid JournalEntryRequest entryRequest, String email) {
-        User user = serviceHelper.getUserByEmail(email);
-        JournalEntry entry = new JournalEntry();
+    @Transactional
+    public JournalEntryDto createJournalEntry(@Valid JournalEntryRequest entryRequest, String ipAddress) {
+        User user = serviceHelper.getAuthenticatedUser();
 
+        JournalEntry entry = new JournalEntry();
         entry.setCreatedAt(LocalDate.now());
         entry.setUpdatedAt(LocalDate.now());
         entry.setTitle(entryRequest.title());
@@ -87,11 +85,16 @@ public class JournalEntryService {
         entry.setUser(user);
         journalEntryRepository.save(entry);
 
+        auditLogService.logAction(user.getId(), AuditAction.CREATE_JOURNAL_ENTRY.name(), "JournalEntry", entry.getId(),
+                String.format("{\"title\": \"%s\"}", entry.getTitle()), ipAddress);
+        logger.info("Created journal entry '{}' (ID: {}) for user {}", entry.getTitle(), entry.getId(), user.getId());
         return JournalEntryDtoMapper.toJournalEntryDto(entry);
     }
 
+    @Transactional
     public JournalEntryDto updateJournalEntry(UUID entryId,
-                                              JournalEntryUpdateRequest entryUpdateRequest) throws AccessDeniedException {
+                                              JournalEntryUpdateRequest entryUpdateRequest,
+                                              String ipAddress) throws AccessDeniedException {
         JournalEntry entry = serviceHelper.getJournalEntryForCurrentUser(entryId);
         boolean updated = false;
 
@@ -104,25 +107,36 @@ public class JournalEntryService {
             updated = true;
         }
 
-        if(updated) {
-            entry.setUpdatedAt(LocalDate.now());
-            journalEntryRepository.save(entry);
+        if(!updated) {
+            throw new IllegalArgumentException("No changes provided for update.");
         }
+
+        entry.setUpdatedAt(LocalDate.now());
+        journalEntryRepository.save(entry);
+
+        auditLogService.logAction(entry.getUser().getId(), AuditAction.UPDATE_JOURNAL_ENTRY.name(), "JournalEntry", entryId,
+                String.format("{\"newTitle\": \"%s\"}", entry.getTitle()), ipAddress);
+        logger.info("Updated journal entry {} (ID: {}) for user {}", entryId, entry.getTitle(), entry.getUser().getId());
         return JournalEntryDtoMapper.toJournalEntryDto(entry);
     }
 
-    public void deleteJournalEntry(UUID entryId) throws AccessDeniedException {
+    @Transactional
+    public void deleteJournalEntry(UUID entryId, String ipAddress) throws AccessDeniedException {
         JournalEntry entry = serviceHelper.getJournalEntryForCurrentUser(entryId);
-        journalEntryRepository.deleteById(entry.getId());
+        journalEntryRepository.delete(entry);
+
+        auditLogService.logAction(entry.getUser().getId(), AuditAction.DELETE_JOURNAL_ENTRY.name(), "JournalEntry", entryId,
+                String.format("{\"deletedTitle\": \"%s\"}", entry.getTitle()), ipAddress);
+        logger.info("Deleted journal entry {} (ID: {}) for user {}", entryId, entry.getTitle(), entry.getUser().getId());
     }
 
     public List<LocalDate> getEntryDates() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = serviceHelper.getUserByEmail(email);
+        User currentUser = serviceHelper.getAuthenticatedUser();
 
-        List<JournalEntry> entries = journalEntryRepository.findAllByUserId(user.getId());
+        List<JournalEntry> entries = journalEntryRepository.findAllByUserId(currentUser.getId());
 
         if(entries.isEmpty()) {
+            logger.debug("No journal entries found for user {}", currentUser.getId());
             return Collections.emptyList();
         }
 
@@ -133,13 +147,15 @@ public class JournalEntryService {
     }
 
     public List<JournalEntryDto> getEntriesByDate(LocalDate date) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = serviceHelper.getAuthenticatedUser();
 
-        List<JournalEntry> entries = journalEntryRepository.findEntriesByUserEmailAndCreatedAt(email, date);
+        List<JournalEntry> entries = journalEntryRepository.findEntriesByUserEmailAndCreatedAt(currentUser.getEmail(), date);
 
         if(entries.isEmpty()) {
+            logger.debug("No journal entries found for user {} on date {}", currentUser.getId(), date);
             return Collections.emptyList();
         }
+
         return entries.stream()
                 .map(JournalEntryDtoMapper::toJournalEntryDto)
                 .toList();
