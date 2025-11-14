@@ -7,5 +7,6 @@ public enum AuditAction {
     CREATE_USER,
     UPDATE_USER_PASSWORD,
     UPDATE_USER_NAME,
-    DELETE_USER
+    DELETE_USER,
+    MARK_ROSARY_COMPLETE,
 }
