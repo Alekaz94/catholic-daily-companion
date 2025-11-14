@@ -7,6 +7,8 @@ import com.alexandros.dailycompanion.mapper.SaintDtoMapper;
 import com.alexandros.dailycompanion.model.Saint;
 import com.alexandros.dailycompanion.repository.SaintRepository;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class SaintService {
+    private final static Logger logger = LoggerFactory.getLogger(SaintService.class);
     private final SaintRepository saintRepository;
     private final ServiceHelper serviceHelper;
 
@@ -66,6 +69,7 @@ public class SaintService {
         saint.setCanonizationYear(saintRequest.canonizationYear());
         saint.setImageUrl(saintRequest.imageUrl());
         saintRepository.save(saint);
+        logger.info("Created saint '{}' (id={})", saint.getName(), saint.getId());
         return SaintDtoMapper.toSaintDto(saint);
     }
 
@@ -108,6 +112,7 @@ public class SaintService {
 
         if(updated) {
             saintRepository.save(currentSaint);
+            logger.info("Updated saint '{}' (id={})", currentSaint.getName(), currentSaint.getId());
         }
         return SaintDtoMapper.toSaintDto(currentSaint);
     }
@@ -115,6 +120,7 @@ public class SaintService {
     public void deleteSaint(UUID saintId) {
         Saint saint = serviceHelper.getSaintById(saintId);
         saintRepository.deleteById(saint.getId());
+        logger.info("Deleted saint '{}' (id={})", saint.getName(), saint.getId());
     }
 
     public Map<String, List<String>> getSaintsByMonth(int year, int month) {

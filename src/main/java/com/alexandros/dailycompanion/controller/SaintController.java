@@ -6,6 +6,8 @@ import com.alexandros.dailycompanion.dto.SaintUpdateRequest;
 import com.alexandros.dailycompanion.dto.PageResponse;
 import com.alexandros.dailycompanion.service.SaintService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import java.util.UUID;
 @RequestMapping("/api/v1/saint")
 @Validated
 public class SaintController {
+    private final static Logger logger = LoggerFactory.getLogger(SaintController.class);
     private final SaintService saintService;
 
     @Autowired
@@ -79,6 +82,7 @@ public class SaintController {
     @PostMapping
     public ResponseEntity<SaintDto> createSaint(@Valid @RequestBody SaintRequest saintRequest) {
         SaintDto saint = saintService.createSaint(saintRequest);
+        logger.info("POST /saint | Created saint | saint={} | id={}", saint.name(), saint.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(saint);
     }
 
@@ -86,12 +90,14 @@ public class SaintController {
     public ResponseEntity<SaintDto> updateSaint(@PathVariable UUID saintId,
                                                 @RequestBody SaintUpdateRequest saintUpdateRequest) {
         SaintDto saint = saintService.updateSaint(saintId, saintUpdateRequest);
+        logger.info("PUT /saint/{} | Updated saint | saint={} | id={}", saintId, saint.name(), saint.id());
         return ResponseEntity.ok(saint);
     }
 
     @DeleteMapping("/{saintId}")
     public ResponseEntity<Void> deleteSaint(@PathVariable UUID saintId) {
         saintService.deleteSaint(saintId);
+        logger.info("DELETE /saint/{} | Deleted saint", saintId);
         return ResponseEntity.noContent().build();
     }
 
