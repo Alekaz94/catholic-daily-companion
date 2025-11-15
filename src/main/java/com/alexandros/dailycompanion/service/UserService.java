@@ -20,14 +20,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -214,7 +210,7 @@ public class UserService implements UserDetailsService {
         return new LoginResponse(userDto, token, refreshToken.getToken());
     }
 
-    public User signUp(@Valid UserRequest userRequest) {
+    public User signUp(@Valid UserRequest userRequest, String ipAddress) {
         try{
             String email = userRequest.email().toLowerCase();
             if (userRepository.findByEmail(email).isPresent()) {
@@ -228,7 +224,6 @@ public class UserService implements UserDetailsService {
             user.setCreatedAt(LocalDate.now());
             user.setUpdatedAt(LocalDate.now());
             user.setRole(Roles.USER);
-
             userRepository.save(user);
             return user;
         } catch (DataIntegrityViolationException e) {

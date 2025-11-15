@@ -51,7 +51,7 @@ public class AuthController {
     @PostMapping("/sign-up")
     public ResponseEntity<SignupResponse> signUpUser(@Valid @RequestBody UserRequest userRequest, HttpServletRequest request) {
         String ipAddress = serviceHelper.getClientIp(request);
-        User user = userService.signUp(userRequest);
+        User user = userService.signUp(userRequest, ipAddress);
         logger.info("User signed up | userId={} | ip={}", user.getId(), ipAddress);
         UserDto userDto = UserDtoMapper.toUserDto(user);
 
