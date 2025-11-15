@@ -7,6 +7,8 @@ import com.alexandros.dailycompanion.mapper.FeedbackDtoMapper;
 import com.alexandros.dailycompanion.model.Feedback;
 import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.repository.FeedbackRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +18,7 @@ import java.util.UUID;
 
 @Service
 public class FeedbackService {
-
+    private final static Logger logger = LoggerFactory.getLogger(FeedbackService.class);
     private final FeedbackRepository feedbackRepository;
     private final ServiceHelper serviceHelper;
 
@@ -39,6 +41,8 @@ public class FeedbackService {
             feedback.setUser(user);
         }
         feedbackRepository.save(feedback);
+
+        logger.info("Feedback created | id={} | user={} | category={}", feedback.getId(), userId, feedbackRequest.category());
     }
 
     public List<FeedbackDto> getAllFeedback() {
@@ -59,6 +63,7 @@ public class FeedbackService {
         feedback.setFixed(feedbackUpdateRequest.isFixed());
         feedbackRepository.save(feedback);
 
+        logger.info("Feedback updated | id={} | fixed={}", id, feedbackUpdateRequest.isFixed());
         return FeedbackDtoMapper.toFeedbackDto(feedback);
     }
 }
