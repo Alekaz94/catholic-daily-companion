@@ -12,5 +12,8 @@ public record SaintRequest(@NotNull @Size(min = 2) String name,
                            @NotNull @Size(min = 10) String biography,
                            @NotNull String patronage,
                            Integer canonizationYear,
-                           String imageUrl) {
+                           String imageUrl,
+                           String imageSource,
+                           String imageAuthor,
+                           String imageLicence) {
 }

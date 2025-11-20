@@ -21,7 +21,10 @@ public class SaintDtoMapper {
                 saint.getBiography(),
                 saint.getPatronage(),
                 saint.getCanonizationYear(),
-                saint.getImageUrl()
+                saint.getImageUrl(),
+                saint.getImageSource(),
+                saint.getImageAuthor(),
+                saint.getImageLicence()
         );
     }
 

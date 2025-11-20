@@ -11,5 +11,8 @@ public record SaintDto(UUID id,
                        String biography,
                        String patronage,
                        Integer canonizationYear,
-                       String imageUrl) {
+                       String imageUrl,
+                       String imageSource,
+                       String imageAuthor,
+                       String imageLicence) {
 }

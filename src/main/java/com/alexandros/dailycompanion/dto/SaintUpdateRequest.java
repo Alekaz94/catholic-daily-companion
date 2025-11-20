@@ -9,5 +9,8 @@ public record SaintUpdateRequest(String name,
                                  String biography,
                                  String patronage,
                                  Integer canonizationYear,
-                                 String imageUrl) {
+                                 String imageUrl,
+                                 String imageSource,
+                                 String imageAuthor,
+                                 String imageLicence) {
 }

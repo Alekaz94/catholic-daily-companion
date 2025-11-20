@@ -65,6 +65,9 @@ public class SaintService {
         saint.setPatronage(saintRequest.patronage());
         saint.setCanonizationYear(saintRequest.canonizationYear());
         saint.setImageUrl(saintRequest.imageUrl());
+        saint.setImageSource(saintRequest.imageSource());
+        saint.setImageAuthor(saintRequest.imageAuthor());
+        saint.setImageLicence(saintRequest.imageLicence());
         saintRepository.save(saint);
         return SaintDtoMapper.toSaintDto(saint);
     }
@@ -103,6 +106,18 @@ public class SaintService {
         }
         if(saintUpdateRequest.imageUrl() != null && !saintUpdateRequest.imageUrl().isEmpty()) {
             currentSaint.setImageUrl(saintUpdateRequest.imageUrl());
+            updated = true;
+        }
+        if(saintUpdateRequest.imageSource() != null && !saintUpdateRequest.imageSource().isEmpty()) {
+            currentSaint.setImageSource(saintUpdateRequest.imageSource());
+            updated = true;
+        }
+        if(saintUpdateRequest.imageAuthor() != null && !saintUpdateRequest.imageAuthor().isEmpty()) {
+            currentSaint.setImageAuthor(saintUpdateRequest.imageAuthor());
+            updated = true;
+        }
+        if(saintUpdateRequest.imageLicence() != null && !saintUpdateRequest.imageLicence().isEmpty()) {
+            currentSaint.setImageLicence(saintUpdateRequest.imageLicence());
             updated = true;
         }
 
