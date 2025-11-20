@@ -32,4 +32,10 @@ public class Saint {
     private Integer canonizationYear;
     @Column(columnDefinition = "TEXT")
     private String imageUrl;
+    @Column(columnDefinition = "TEXT")
+    private String imageAuthor;
+    @Column(columnDefinition = "TEXT")
+    private String imageSource;
+    @Column(columnDefinition = "TEXT")
+    private String imageLicence;
 }
