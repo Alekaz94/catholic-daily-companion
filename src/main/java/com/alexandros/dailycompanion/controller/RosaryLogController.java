@@ -1,7 +1,12 @@
 package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.RosaryLogDto;
+import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.service.RosaryLogService;
+import com.alexandros.dailycompanion.service.ServiceHelper;
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,16 +19,22 @@ import java.util.UUID;
 @RequestMapping("/api/v1/rosary")
 public class RosaryLogController {
 
+    private final static Logger logger = LoggerFactory.getLogger(RosaryLogController.class);
     private final RosaryLogService rosaryLogService;
+    private final ServiceHelper serviceHelper;
 
     @Autowired
-    public RosaryLogController(RosaryLogService rosaryLogService) {
+    public RosaryLogController(RosaryLogService rosaryLogService, ServiceHelper serviceHelper) {
         this.rosaryLogService = rosaryLogService;
+        this.serviceHelper = serviceHelper;
     }
 
     @PostMapping("/{userId}/complete")
-    public ResponseEntity<RosaryLogDto> completeToday(@PathVariable UUID userId) {
-        RosaryLogDto rosaryLog = rosaryLogService.markCompleted(userId);
+    public ResponseEntity<RosaryLogDto> completeToday(@PathVariable UUID userId, HttpServletRequest request) {
+        String ipAddress = serviceHelper.getClientIp(request);
+        User user = serviceHelper.getAuthenticatedUser();
+        RosaryLogDto rosaryLog = rosaryLogService.markCompleted(userId, ipAddress);
+        logger.info("POST /rosary/{}/complete | user={} | ip={}", userId, user.getId(), ipAddress);
         return ResponseEntity.ok(rosaryLog);
     }
 

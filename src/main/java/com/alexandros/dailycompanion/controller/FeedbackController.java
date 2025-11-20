@@ -6,6 +6,8 @@ import com.alexandros.dailycompanion.dto.FeedbackUpdateRequest;
 import com.alexandros.dailycompanion.model.Feedback;
 import com.alexandros.dailycompanion.service.FeedbackService;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/feedback")
 public class FeedbackController {
-
+    private final static Logger logger = LoggerFactory.getLogger(FeedbackController.class);
     private final FeedbackService feedbackService;
 
     @Autowired
@@ -30,6 +32,8 @@ public class FeedbackController {
     public ResponseEntity<Void> submitFeedback(@RequestHeader(value = "user_id", required = false) UUID userId,
                                             @RequestBody FeedbackRequest feedbackRequest) {
         feedbackService.submitFeedback(userId, feedbackRequest);
+
+        logger.info("POST /feedback | Feedback submitted | userId={} | category={}", userId, feedbackRequest.category());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -48,6 +52,8 @@ public class FeedbackController {
     @PutMapping("/{id}")
     public ResponseEntity<FeedbackDto> updateIsFixed(@PathVariable UUID id, @RequestBody FeedbackUpdateRequest feedbackUpdateRequest) {
         FeedbackDto feedbackDto = feedbackService.updateIsFixed(id, feedbackUpdateRequest);
+
+        logger.info("PUT /feedback/{} | Updated 'fixed' status to {}", id, feedbackUpdateRequest.isFixed());
         return ResponseEntity.ok(feedbackDto);
     }
 

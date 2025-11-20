@@ -5,6 +5,8 @@ import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.repository.RefreshTokenRepository;
 import com.alexandros.dailycompanion.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 @Service
 public class RefreshTokenService {
+    private static final Logger logger = LoggerFactory.getLogger(RefreshTokenService.class);
 
     @Value("${jwt.refreshExpiration}")
     private Long refreshExpirationSeconds;
@@ -23,6 +26,7 @@ public class RefreshTokenService {
     private RefreshTokenRepository refreshTokenRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
     private ServiceHelper serviceHelper;
 
     @Transactional
@@ -37,18 +41,22 @@ public class RefreshTokenService {
         refreshToken.setToken(UUID.randomUUID().toString());
         refreshToken.setExpiryDate(Instant.now().plusSeconds(refreshExpirationSeconds));
 
-        return refreshTokenRepository.save(refreshToken);
+        RefreshToken saved = refreshTokenRepository.save(refreshToken);
+
+        logger.info("Created refresh token for userId={}", user.getId());
+        return saved;
     }
 
     public void verifyExpiration(RefreshToken token) {
         if(token.getExpiryDate().isBefore(Instant.now())) {
+            logger.warn("Expired refresh token detected for userId={}", token.getUser().getId());
             throw new RuntimeException("Refresh token was expired. Please login again.");
         }
     }
 
     public int deleteByUser(UUID userId) {
         User user = serviceHelper.getUserByIdOrThrow(userId);
-
+        logger.info("Deleted all refresh tokens for userId={}", userId);
         return refreshTokenRepository.deleteByUser(user);
     }
 
@@ -57,6 +65,7 @@ public class RefreshTokenService {
     }
 
     public void deleteRefreshToken(RefreshToken refreshToken) {
+        logger.info("Deleted refresh token for userId={}", refreshToken.getUser().getId());
         refreshTokenRepository.delete(refreshToken);
     }
 }

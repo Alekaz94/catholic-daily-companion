@@ -4,8 +4,15 @@ import com.alexandros.dailycompanion.dto.JournalEntryDto;
 import com.alexandros.dailycompanion.dto.JournalEntryRequest;
 import com.alexandros.dailycompanion.dto.JournalEntryUpdateRequest;
 import com.alexandros.dailycompanion.dto.PageResponse;
+import com.alexandros.dailycompanion.model.JournalEntry;
+import com.alexandros.dailycompanion.model.User;
+import com.alexandros.dailycompanion.service.AuditLogService;
 import com.alexandros.dailycompanion.service.JournalEntryService;
+import com.alexandros.dailycompanion.service.ServiceHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -16,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.nio.file.AccessDeniedException;
 import java.security.Principal;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,11 +31,14 @@ import java.util.UUID;
 @RequestMapping("/api/v1/journal-entry")
 @Validated
 public class JournalEntryController {
+    private final static Logger logger = LoggerFactory.getLogger(JournalEntryController.class);
     private final JournalEntryService journalEntryService;
+    private final ServiceHelper serviceHelper;
 
     @Autowired
-    public JournalEntryController(JournalEntryService journalEntryService) {
+    public JournalEntryController(JournalEntryService journalEntryService, ServiceHelper serviceHelper) {
         this.journalEntryService = journalEntryService;
+        this.serviceHelper = serviceHelper;
     }
 
     @GetMapping
@@ -64,29 +75,47 @@ public class JournalEntryController {
     }
 
     @GetMapping("/dates/{date}")
-    public ResponseEntity<List<JournalEntryDto>> getEntryByDate(@PathVariable String date) {
-        LocalDate localDate = LocalDate.parse(date);
-        List<JournalEntryDto> entry = journalEntryService.getEntriesByDate(localDate);
-        return ResponseEntity.ok(entry);
+    public ResponseEntity<?> getEntryByDate(@PathVariable String date) {
+        try {
+            LocalDate localDate = LocalDate.parse(date);
+            List<JournalEntryDto> entry = journalEntryService.getEntriesByDate(localDate);
+            return ResponseEntity.ok(entry);
+        } catch (DateTimeParseException dateTimeParseException) {
+            return ResponseEntity.badRequest().body("Invalid date format. Use 'yyyy-MM-dd'.");
+        }
     }
 
     @PostMapping
     public ResponseEntity<JournalEntryDto> createJournalEntry(@Valid @RequestBody JournalEntryRequest entryRequest,
-                                                              Principal principal) {
-        JournalEntryDto entry = journalEntryService.createJournalEntry(entryRequest, principal.getName());
+                                                              HttpServletRequest servletRequest) {
+        User currentUser = serviceHelper.getAuthenticatedUser();
+        String ipAddress = serviceHelper.getClientIp(servletRequest);
+
+        JournalEntryDto entry = journalEntryService.createJournalEntry(entryRequest, ipAddress);
+        logger.info("POST /journal-entry | user={} | title='{}' | ip={}", currentUser.getId(), entry.title(), ipAddress);
         return ResponseEntity.status(HttpStatus.CREATED).body(entry);
     }
 
     @PutMapping("/{entryId}")
     public ResponseEntity<JournalEntryDto> updateJournalEntry(@PathVariable UUID entryId,
-                                                          @Valid @RequestBody JournalEntryUpdateRequest entryUpdateRequest) throws AccessDeniedException {
-        JournalEntryDto entry = journalEntryService.updateJournalEntry(entryId, entryUpdateRequest);
-        return ResponseEntity.ok(entry);
+                                                          @Valid @RequestBody JournalEntryUpdateRequest entryUpdateRequest,
+                                                              HttpServletRequest servletRequest) throws AccessDeniedException {
+        User currentUser = serviceHelper.getAuthenticatedUser();
+        String ipAddress = serviceHelper.getClientIp(servletRequest);
+
+        JournalEntryDto updatedEntry = journalEntryService.updateJournalEntry(entryId, entryUpdateRequest, ipAddress);
+        logger.info("PUT /journal-entry/{} | user={} | title='{}' | ip={}", entryId, currentUser.getId(), updatedEntry.title(), ipAddress);
+        return ResponseEntity.ok(updatedEntry);
     }
 
     @DeleteMapping("/{entryId}")
-    public ResponseEntity<Void> deleteJournalEntry(@PathVariable UUID entryId) throws AccessDeniedException {
-        journalEntryService.deleteJournalEntry(entryId);
+    public ResponseEntity<Void> deleteJournalEntry(@PathVariable UUID entryId,
+                                                   HttpServletRequest servletRequest) throws AccessDeniedException {
+        User currentUser = serviceHelper.getAuthenticatedUser();
+        String ipAddress = serviceHelper.getClientIp(servletRequest);
+
+        journalEntryService.deleteJournalEntry(entryId, ipAddress);
+        logger.info("DELETE /journal-entry/{} | user={} | ip={}", entryId, currentUser.getId(), ipAddress);
         return ResponseEntity.noContent().build();
     }
 }

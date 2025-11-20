@@ -1,4 +1,3 @@
-/*
 package com.alexandros.dailycompanion.model;
 
 import jakarta.persistence.*;
@@ -8,28 +7,30 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Table(name = "daily_reading")
 @Entity
-public class DailyReading {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "audit_log")
+public class AuditLog {
+
     @Id
     @GeneratedValue
     @JdbcTypeCode(SqlTypes.UUID)
     @Column(updatable = false, nullable = false)
     private UUID id;
-    private LocalDate createdAt;
+
+    private UUID userId;
+    private String action;
+    private String entityType;
+    private UUID entityId;
+
     @Column(columnDefinition = "TEXT")
-    private String firstReading;
-    @Column(columnDefinition = "TEXT")
-    private String secondReading;
-    @Column(columnDefinition = "TEXT")
-    private String psalm;
-    @Column(columnDefinition = "TEXT")
-    private String gospel;
+    private String metaData;
+
+    private String ipAddress;
+    private LocalDateTime createdAt = LocalDateTime.now();
 }
-*/

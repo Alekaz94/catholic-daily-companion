@@ -101,7 +101,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                         null,
                         Collections.singletonList(authority)
                 );
-                logger.debug("Authenticated user: {} with authorities: {}", email, authority);
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 

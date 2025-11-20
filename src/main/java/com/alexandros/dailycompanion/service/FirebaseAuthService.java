@@ -1,5 +1,6 @@
 package com.alexandros.dailycompanion.service;
 
+import com.alexandros.dailycompanion.controller.FeedbackController;
 import com.alexandros.dailycompanion.dto.LoginResponse;
 import com.alexandros.dailycompanion.dto.UserDto;
 import com.alexandros.dailycompanion.enums.Roles;
@@ -11,6 +12,8 @@ import com.alexandros.dailycompanion.security.JwtUtil;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +22,7 @@ import java.util.Optional;
 
 @Service
 public class FirebaseAuthService {
-
+    private final static Logger logger = LoggerFactory.getLogger(FirebaseAuthService.class);
     private final FirebaseAuth firebaseAuth;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
@@ -32,16 +35,19 @@ public class FirebaseAuthService {
         this.jwtUtil = jwtUtil;
     }
 
-    public LoginResponse verifyFirebaseTokenAndLogin(String idToken) throws FirebaseAuthException {
+    public LoginResponse verifyFirebaseTokenAndLogin(String idToken, String ipAddress) throws FirebaseAuthException {
         FirebaseToken decodedFirebaseToken = firebaseAuth.verifyIdToken(idToken);
         String email = decodedFirebaseToken.getEmail().toLowerCase();
 
+        logger.info("Firebase token verified | ip={}", ipAddress);
         Optional<User> optionalUser = userRepository.findByEmail(email);
         User user;
 
         if(optionalUser.isPresent()) {
             user = optionalUser.get();
+            logger.info("Firebase login existing user | userId={} | ip={}", user.getId(), ipAddress);
         } else {
+            logger.info("Creating new Firebase user | ip={}", ipAddress);
             user = new User();
             user.setEmail(email);
             user.setFirstName(decodedFirebaseToken.getName() != null ? decodedFirebaseToken.getName() : "User");
@@ -50,7 +56,9 @@ public class FirebaseAuthService {
             user.setUpdatedAt(LocalDate.now());
             try {
                 user = userRepository.save(user);
+                logger.info("Firebase user created | userId={} | ip={}", user.getId(), ipAddress);
             } catch (DataIntegrityViolationException e) {
+                logger.warn("Race condition: user already created | userId={} | ip={}", user.getId(), ipAddress);
                 user = userRepository.findByEmail(email)
                         .orElseThrow(() -> new IllegalStateException("User was just created but cant be found."));
             }
