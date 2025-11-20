@@ -242,9 +242,9 @@
     "patronage": "Lost causes, desperate situations, hospitals, and desperate cases",
     "canonizationYear": null,
     "imageUrl": "/images/saint_jude_thaddeus.jpg",
-    "imageSource": "Musée Toulouse-Lautrec",
-    "imageAuthor": "Georges de La Tour (1593–1652)",
-    "imageLicence": "Public Domain – artist died over 100 years ago; faithful photographic reproduction (PD-Art)"
+    "imageSource": "https://www.johnsanidopoulos.com/2017/06/holy-apostle-jude-of-twelve.html",
+    "imageAuthor": "Unknown",
+    "imageLicence": "Public domain"
   },
   {
     "name": "Saint Sebastian",
@@ -346,9 +346,9 @@
     "patronage": "The United States, the Catholic Church, seafarers, and purity",
     "canonizationYear": null,
     "imageUrl": "/images/immaculate_conception.jpg",
-    "imageSource": "Museo del Prado, Madrid – Giovanni Battista Tiepolo: The Immaculate Conception (1767–1768)",
-    "imageAuthor": "Giovanni Battista Tiepolo (1696–1770)",
-    "imageLicence": "Public Domain – artwork and image released under Museo del Prado Open Access Policy (PD-Art, Wikimedia Commons)"
+    "imageSource": "Museo del Prado, Madrid (https://www.museodelprado.es/coleccion/obra/immaculate-of-soult/P02809)",
+    "imageAuthor": "Bartolomé Esteban Murillo (1617–1682)",
+    "imageLicence": "Public domain"
   },
   {
     "name": "Saint Bernadette",
