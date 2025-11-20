@@ -35,15 +35,36 @@ public class FirebaseAuthService {
         this.jwtUtil = jwtUtil;
     }
 
+    public User createOrGetUser(String email, String firstName) {
+        try {
+            return userRepository.findByEmail(email)
+                    .orElseGet(() -> {
+                        LocalDate now = LocalDate.now();
+                        User newUser = new User();
+                        newUser.setEmail(email);
+                        newUser.setFirstName(firstName != null ? firstName : "User");
+                        newUser.setLastName("");
+                        newUser.setRole(Roles.USER);
+                        newUser.setCreatedAt(now);
+                        newUser.setUpdatedAt(now);
+                        return userRepository.save(newUser);
+                    });
+        } catch (DataIntegrityViolationException e) {
+            return userRepository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalStateException("User should exist after insert."));
+        }
+    }
+
     public LoginResponse verifyFirebaseTokenAndLogin(String idToken, String ipAddress) throws FirebaseAuthException {
         FirebaseToken decodedFirebaseToken = firebaseAuth.verifyIdToken(idToken);
         String email = decodedFirebaseToken.getEmail().toLowerCase();
+        String name = decodedFirebaseToken.getName() != null ? decodedFirebaseToken.getName() : "User";
 
         logger.info("Firebase token verified | ip={}", ipAddress);
         Optional<User> optionalUser = userRepository.findByEmail(email);
-        User user;
+        User user = createOrGetUser(email, name);
 
-        if(optionalUser.isPresent()) {
+       /* if(optionalUser.isPresent()) {
             user = optionalUser.get();
             logger.info("Firebase login existing user | userId={} | ip={}", user.getId(), ipAddress);
         } else {
@@ -62,7 +83,8 @@ public class FirebaseAuthService {
                 user = userRepository.findByEmail(email)
                         .orElseThrow(() -> new IllegalStateException("User was just created but cant be found."));
             }
-        }
+        }*/
+        logger.info("Firebase login user | userId={} | ip={}", user.getId(), ipAddress);
 
         UserDto userDto = UserDtoMapper.toUserDto(user);
         String token = jwtUtil.generateToken(userDto);
