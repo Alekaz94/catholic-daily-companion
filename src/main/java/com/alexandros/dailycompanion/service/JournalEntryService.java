@@ -43,24 +43,23 @@ public class JournalEntryService {
 
     public Page<JournalEntryDto> getAllJournalEntriesForUser(int page, int size, String sort) {
         Sort.Direction direction = Sort.Direction.fromOptionalString(sort).orElse(Sort.Direction.DESC);
-
         Sort sortBy = Sort.by(direction, "updatedAt").and(Sort.by(direction, "createdAt"));
         Pageable pageable = PageRequest.of(page, size, sortBy);
 
-        Page<JournalEntry> entries;
         User user = serviceHelper.getAuthenticatedUser();
 
-        if(user.getRole().equals(Roles.ADMIN)) {
-            entries = journalEntryRepository.findAll(pageable);
-        } else  {
-            entries = journalEntryRepository.findAllByUserId(user.getId(), pageable);
-        }
+        Page<JournalEntry> entries = journalEntryRepository.findAllByUserId(user.getId(), pageable);
+
         logger.debug("Fetched {} journal entries for user {}", entries.getTotalElements(), user.getId());
         return JournalEntryDtoMapper.toJournalEntryDto(entries);
     }
 
-    public List<JournalEntryDto> getAllJournalEntriesForUserNotPaged(UUID userId) {
-        User user = serviceHelper.getUserByIdOrThrow(userId);
+    public List<JournalEntryDto> getAllJournalEntriesForUserNotPaged(UUID userId) throws AccessDeniedException {
+        User user = serviceHelper.getAuthenticatedUser();
+
+        if(!user.getId().equals(userId)) {
+            throw new AccessDeniedException("You cannot access another user's journal entries.");
+        }
 
         List<JournalEntry> entries = journalEntryRepository.findAllByUserId(user.getId());
 
