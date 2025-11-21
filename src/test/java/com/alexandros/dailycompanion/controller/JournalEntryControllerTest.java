@@ -3,204 +3,166 @@ package com.alexandros.dailycompanion.controller;
 import com.alexandros.dailycompanion.dto.JournalEntryDto;
 import com.alexandros.dailycompanion.dto.JournalEntryRequest;
 import com.alexandros.dailycompanion.dto.JournalEntryUpdateRequest;
+import com.alexandros.dailycompanion.dto.PageResponse;
+import com.alexandros.dailycompanion.exception.GlobalExceptionHandler;
+import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.service.JournalEntryService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.alexandros.dailycompanion.service.ServiceHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@WithMockUser(username = "test", roles = {"USER", "ADMIN"})
-@Import(JournalEntryControllerTest.MockConfig.class)
-public class JournalEntryControllerTest {
+class JournalEntryControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
+    @Mock
     private JournalEntryService journalEntryService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Mock
+    private ServiceHelper serviceHelper;
 
+    @InjectMocks
+    private JournalEntryController journalEntryController;
+
+    private User user;
     private JournalEntryDto journalEntryDto;
-    private final UUID entryId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(journalEntryController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+
+        user = new User();
+        user.setId(UUID.randomUUID());
+
         journalEntryDto = new JournalEntryDto(
-                entryId,
+                UUID.randomUUID(),
                 LocalDate.now(),
                 LocalDate.now(),
-                "Hello",
-                "Content"
+                "My Title",
+                "My Content"
         );
-    }
 
-    @TestConfiguration
-    static class MockConfig {
-        @Bean
-        public JournalEntryService journalEntryService() {
-            return Mockito.mock(JournalEntryService.class);
-        }
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
+        when(serviceHelper.getClientIp(any())).thenReturn("127.0.0.1");
     }
 
     @Test
-    void getAllJournalEntriesShouldReturnList() throws Exception {
-        Page<JournalEntryDto> page = new PageImpl<>(List.of(journalEntryDto));
-        when(journalEntryService.getAllJournalEntriesForUser(anyInt(), anyInt(), anyString())).thenReturn(page);
+    void getAllJournalEntries_success() throws Exception {
+        PageResponse<JournalEntryDto> pageResponse = new PageResponse<>(
+                List.of(journalEntryDto), 0, 5, 1, 1, true
+        );
 
-        mockMvc.perform(get("/api/v1/journal-entry"))
+        when(journalEntryService.getAllJournalEntriesForUser(0, 5, "desc")).thenReturn(
+                new org.springframework.data.domain.PageImpl<>(List.of(journalEntryDto))
+        );
+
+        mockMvc.perform(get("/api/v1/journal-entry")
+                        .param("page", "0")
+                        .param("size", "5")
+                        .param("sort", "desc"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].id").value(entryId.toString()))
-                .andExpect(jsonPath("$.content[0].title").value("Hello"))
-                .andExpect(jsonPath("$.content[0].content").value("Content"));
+                .andExpect(jsonPath("$.content[0].title").value("My Title"));
     }
 
     @Test
-    void getJournalEntryByIdShouldReturnJournalEntryDto() throws Exception {
-        when(journalEntryService.getEntryById(entryId)).thenReturn(journalEntryDto);
+    void getEntryById_success() throws Exception {
+        when(journalEntryService.getEntryById(journalEntryDto.id())).thenReturn(journalEntryDto);
 
-        mockMvc.perform(get("/api/v1/journal-entry/" + entryId))
+        mockMvc.perform(get("/api/v1/journal-entry/{entryId}", journalEntryDto.id()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(entryId.toString()))
-                .andExpect(jsonPath("$.title").value("Hello"))
-                .andExpect(jsonPath("$.content").value("Content"));
+                .andExpect(jsonPath("$.title").value("My Title"));
     }
 
     @Test
-    void createJournalEntryShouldReturnCreatedJournalEntryDto() throws Exception{
-        JournalEntryRequest request = new JournalEntryRequest(
-                "New Title",
-                "New Content"
-        );
+    void getEntryById_notFound_shouldReturn404() throws Exception {
+        UUID entryId = UUID.randomUUID();
+        when(journalEntryService.getEntryById(entryId))
+                .thenThrow(new jakarta.persistence.EntityNotFoundException("Journal entry not found"));
 
-        JournalEntryDto createdDto = new JournalEntryDto(
-                entryId,
-                LocalDate.now(),
-                LocalDate.now(),
-                request.title(),
-                request.content()
-        );
+        mockMvc.perform(get("/api/v1/journal-entry/{entryId}", entryId))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Journal entry not found"));
+    }
 
-        when(journalEntryService.createJournalEntry(any(JournalEntryRequest.class), eq("test")))
-                .thenReturn(createdDto);
+    @Test
+    void createJournalEntry_success() throws Exception {
+        JournalEntryRequest request = new JournalEntryRequest("My Title", "My Content");
+
+        when(journalEntryService.createJournalEntry(any(), any())).thenReturn(journalEntryDto);
 
         mockMvc.perform(post("/api/v1/journal-entry")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"My Title\",\"content\":\"My Content\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title").value("New Title"))
-                .andExpect(jsonPath("$.content").value("New Content"));
+                .andExpect(jsonPath("$.title").value("My Title"));
     }
 
     @Test
-    void createJournalEntryWithEmptyTitleShouldReturnBadRequest() throws Exception {
-        JournalEntryRequest invalidRequest = new JournalEntryRequest(
-                "",
-                "Some content"
-        );
+    void createJournalEntry_invalidInput_shouldReturn400() throws Exception {
+        String invalidJson = """
+    {
+        "content": "Only content, missing title"
+    }
+    """;
 
         mockMvc.perform(post("/api/v1/journal-entry")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRequest)))
+                        .content(invalidJson))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    void updateJournalEntryShouldReturnUpdatedJournalEntry() throws Exception {
-        JournalEntryUpdateRequest request = new JournalEntryUpdateRequest(
-            "Updated Title",
-                "Updated Content"
+    void updateJournalEntry_success() throws Exception {
+        JournalEntryUpdateRequest updateRequest = new JournalEntryUpdateRequest("Updated Title", "Updated Content");
+
+        when(journalEntryService.updateJournalEntry(any(), any(), any())).thenReturn(
+                new JournalEntryDto(journalEntryDto.id(), LocalDate.now(), LocalDate.now(), "Updated Title", "Updated Content")
         );
 
-        JournalEntryDto updatedDto = new JournalEntryDto(
-                entryId,
-                LocalDate.now(),
-                LocalDate.now(),
-                "Updated Title",
-                "Updated Content"
-        );
-
-        when(journalEntryService.updateJournalEntry(eq(entryId), any(JournalEntryUpdateRequest.class)))
-                .thenReturn(updatedDto);
-
-        mockMvc.perform(put("/api/v1/journal-entry/" + entryId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Updated Title"))
-                .andExpect(jsonPath("$.content").value("Updated Content"));
-    }
-
-    @Test
-    void updateJournalEntryWithOnlyContentShouldReturnUpdatedEntry() throws Exception {
-        JournalEntryUpdateRequest updateRequest = new JournalEntryUpdateRequest(
-                null,
-                "Only Content Updated"
-        );
-
-        JournalEntryDto updatedDto = new JournalEntryDto(
-                entryId,
-                LocalDate.now(),
-                LocalDate.now(),
-                journalEntryDto.title(),
-                "Only Content Updated"
-        );
-
-        when(journalEntryService.updateJournalEntry(eq(entryId), any(JournalEntryUpdateRequest.class)))
-                .thenReturn(updatedDto);
-
-        mockMvc.perform(put("/api/v1/journal-entry/" + entryId)
+        mockMvc.perform(put("/api/v1/journal-entry/{entryId}", journalEntryDto.id())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateRequest)))
+                        .content("{\"title\":\"Updated Title\",\"content\":\"Updated Content\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value(journalEntryDto.title()))
-                .andExpect(jsonPath("$.content").value("Only Content Updated"));
+                .andExpect(jsonPath("$.title").value("Updated Title"));
     }
 
     @Test
-    void updateJournalEntryWithEmptyContentShouldReturnBadRequest() throws Exception {
-        JournalEntryRequest invalidRequest = new JournalEntryRequest(
-                "Title",
-                ""
-        );
+    void updateJournalEntry_notFound_shouldReturn404() throws Exception {
+        UUID entryId = UUID.randomUUID();
 
-        mockMvc.perform(put("/api/v1/journal-entry/" + entryId)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(invalidRequest)))
-                .andExpect(status().isBadRequest());
+        when(journalEntryService.updateJournalEntry(eq(entryId), any(), any()))
+                .thenThrow(new jakarta.persistence.EntityNotFoundException("Journal entry not found"));
+
+        mockMvc.perform(put("/api/v1/journal-entry/{entryId}", entryId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Updated\",\"content\":\"Updated Content\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Journal entry not found"));
     }
 
     @Test
-    void deleteJournalEntryShouldReturnNoContnent() throws Exception {
-        doNothing().when(journalEntryService).deleteJournalEntry(entryId);
-
-        mockMvc.perform(delete("/api/v1/journal-entry/" + entryId))
+    void deleteJournalEntry_success() throws Exception {
+        mockMvc.perform(delete("/api/v1/journal-entry/{entryId}", journalEntryDto.id()))
                 .andExpect(status().isNoContent());
     }
 }

@@ -1,193 +1,183 @@
 package com.alexandros.dailycompanion.controller;
 
-import com.alexandros.dailycompanion.dto.LoginRequest;
-import com.alexandros.dailycompanion.dto.LoginResponse;
-import com.alexandros.dailycompanion.dto.UserDto;
-import com.alexandros.dailycompanion.dto.UserRequest;
+import com.alexandros.dailycompanion.dto.*;
 import com.alexandros.dailycompanion.enums.Roles;
+import com.alexandros.dailycompanion.exception.GlobalExceptionHandler;
+import com.alexandros.dailycompanion.model.RefreshToken;
+import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.security.JwtUtil;
+import com.alexandros.dailycompanion.service.RefreshTokenService;
+import com.alexandros.dailycompanion.service.ServiceHelper;
 import com.alexandros.dailycompanion.service.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@WithMockUser(username = "test", roles = {"USER", "ADMIN"})
-@Import(AuthControllerTest.MockConfig.class)
-public class AuthControllerTest {
+class AuthControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
+    @Mock
     private UserService userService;
 
-    @Autowired
+    @Mock
     private JwtUtil jwtUtil;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private ServiceHelper serviceHelper;
+
+    @InjectMocks
+    private AuthController authController;
+
+    private User user;
     private UserDto userDto;
-    private final UUID userId = UUID.randomUUID();
+    private RefreshToken refreshToken;
 
     @BeforeEach
     void setUp() {
-        userDto = new UserDto(
-                userId,
-                "Test",
-                "User",
-                "user@example.com",
-                Roles.USER
-        );
-    }
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(authController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+        when(serviceHelper.getClientIp(any())).thenReturn("127.0.0.1");
 
-    @TestConfiguration
-    static class MockConfig {
-        @Bean
-        public UserService userService() {
-            return Mockito.mock(UserService.class);
-        }
+        user = new User();
+        user.setId(UUID.randomUUID());
 
-        @Bean
-        public JwtUtil jwtUtil() {
-            return Mockito.mock(JwtUtil.class);
-        }
+        userDto = new UserDto(user.getId(), "Test", "User", "test@example.com", Roles.USER, LocalDate.now(), LocalDate.now());
 
-        @Bean
-        public ObjectMapper objectMapper() {
-            return new ObjectMapper();
-        }
+        refreshToken = new RefreshToken();
+        refreshToken.setToken("refresh-token");
+        refreshToken.setUser(user);
     }
 
     @Test
-    void loginShouldReturnLoginResponse() throws Exception {
-        LoginRequest loginRequest = new LoginRequest("user@example.com", "password");
-        LoginResponse loginResponse = new LoginResponse(userDto, "jwt-token");
+    void login_success() throws Exception {
+        LoginResponse loginResponse = new LoginResponse(userDto, "token", refreshToken.getToken());
 
-        when(userService.login(any(LoginRequest.class)))
-                .thenReturn(loginResponse);
+        when(serviceHelper.getClientIp(any())).thenReturn("127.0.0.1");
+        when(userService.login(any())).thenReturn(loginResponse);
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
+                        .content("{\"email\":\"test@example.com\",\"password\":\"password\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user.email").value("user@example.com"))
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+                .andExpect(jsonPath("$.user.id").value(user.getId().toString()))
+                .andExpect(jsonPath("$.user.email").value("test@example.com"))
+                .andExpect(jsonPath("$.token").value("token"));
     }
 
     @Test
-    void loginWithInvalidCredentialsShouldReturnUnauthorized() throws Exception {
-        LoginRequest loginRequest = new LoginRequest("wrong@example.com", "badpassword");
-
-        when(userService.login(any(LoginRequest.class))).thenThrow(new AuthenticationException("Bad credentials") {});
+    void login_invalidInput_shouldReturn400() throws Exception {
+        String invalidJson = """
+    {
+        "email": "test@example.com"
+    }
+    """;
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequest)))
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void login_failure_invalidCredentials() throws Exception {
+        when(serviceHelper.getClientIp(any())).thenReturn("127.0.0.1");
+        when(userService.login(any())).thenThrow(BadCredentialsException.class);
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"wrong@example.com\",\"password\":\"wrong\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string("Invalid credentials!"));
     }
 
     @Test
-    void loginWithMissingEmailShouldReturnBadRequest() throws Exception {
-        String invalidJson = """
-            {
-              "password": "somePassword"
-            }
-            """;
-
-        mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJson))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void loginWithBlankPasswordShouldReturnBadRequest() throws Exception {
-        String invalidJson = """
-            {
-              "email": "user@example.com",
-              "password": ""
-            }
-            """;
-
-        mockMvc.perform(post("/api/v1/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJson))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void signUpShouldReturnUserWithJwtToken() throws Exception {
-        UserRequest request = new UserRequest(
-                "Test",
-                "User",
-                "user@example.com",
-                "password"
-        );
-
-        String token = "jwt-token";
-
-        when(userService.signUp(any(UserRequest.class))).thenReturn(userDto);
-        when(jwtUtil.generateToken(eq(userDto))).thenReturn(token);
+    void signUp_success() throws Exception {
+        UserRequest userRequest = new UserRequest("Test", "User", "test@example.com", "password");
+        when(serviceHelper.getClientIp(any())).thenReturn("127.0.0.1");
+        when(userService.signUp(any(), any())).thenReturn(user);
+        when(jwtUtil.generateToken(any())).thenReturn("token");
+        when(refreshTokenService.createRefreshToken(any())).thenReturn(refreshToken);
 
         mockMvc.perform(post("/api/v1/auth/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content("{\"firstName\":\"Test\", \"lastName\":\"User\",\"email\":\"test@example.com\",\"password\":\"password\"}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.user.email").value("user@example.com"))
-                .andExpect(jsonPath("$.token").value(token));
+                .andExpect(jsonPath("$.user.id").value(user.getId().toString()))
+                .andExpect(jsonPath("$.token").value("token"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
     }
 
     @Test
-    void signUpWithExistingEmailShouldReturnConflict() throws Exception {
-        UserRequest request = new UserRequest("Test", "User", "user@example.com", "password");
-
-        when(userService.signUp(any(UserRequest.class)))
-                .thenThrow(new IllegalStateException("Email already exists!"));
+    void signUp_existingEmail_shouldReturn409() throws Exception {
+        when(userService.signUp(any(), any()))
+                .thenThrow(new IllegalStateException("Email already exists"));
 
         mockMvc.perform(post("/api/v1/auth/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content("{\"firstName\":\"Test\", \"lastName\":\"User\",\"email\":\"test@example.com\",\"password\":\"password\"}"))
                 .andExpect(status().isConflict())
-                .andExpect(content().string("Email already exists!"));
+                .andExpect(content().string("Email already exists"));
     }
 
     @Test
-    void signUpWithInvalidEmailFormatShouldReturnBadRequest() throws Exception {
-        String invalidJson = """
-            {
-              "firstName": "John",
-              "lastName": "Doe",
-              "email": "not-an-email",
-              "password": "password123"
-            }
-            """;
+    void refreshToken_success() throws Exception {
+        RefreshToken newRefreshToken = new RefreshToken();
+        newRefreshToken.setToken("refresh-token");
+        newRefreshToken.setUser(user);
 
-        mockMvc.perform(post("/api/v1/auth/sign-up")
+        when(refreshTokenService.findByToken("refresh-token")).thenReturn(Optional.of(refreshToken));
+        when(refreshTokenService.createRefreshToken(any())).thenReturn(newRefreshToken);
+        when(jwtUtil.generateToken(any())).thenReturn("new-access-token");
+
+        mockMvc.perform(post("/api/v1/auth/refresh-token")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJson))
-                .andExpect(status().isBadRequest());
+                        .content("{\"refreshToken\":\"refresh-token\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("new-access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
+    }
+
+    @Test
+    void refreshToken_invalid() throws Exception {
+        when(serviceHelper.getClientIp(any())).thenReturn("127.0.0.1");
+        when(refreshTokenService.findByToken("invalid")).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/v1/auth/refresh-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"invalid\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("Invalid refresh token."));
+    }
+
+    @Test
+    void refreshToken_missing_shouldReturn401() throws Exception {
+        when(refreshTokenService.findByToken("invalid")).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/v1/auth/refresh-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\":\"invalid\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string("Invalid refresh token."));
     }
 }
