@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2025 Alexandros Kazalis
+ *
+ * Licensed under the MIT License. See LICENSE file in the project root for details.
+ */
+
 package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.*;
@@ -6,7 +12,6 @@ import com.alexandros.dailycompanion.exception.GlobalExceptionHandler;
 import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.service.ServiceHelper;
 import com.alexandros.dailycompanion.service.UserService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,12 +26,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;

@@ -1,10 +1,15 @@
+/*
+ * Copyright (c) 2025 Alexandros Kazalis
+ *
+ * Licensed under the MIT License. See LICENSE file in the project root for details.
+ */
+
 package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.JournalEntryDto;
 import com.alexandros.dailycompanion.dto.JournalEntryRequest;
 import com.alexandros.dailycompanion.dto.JournalEntryUpdateRequest;
 import com.alexandros.dailycompanion.enums.AuditAction;
-import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.JournalEntryDtoMapper;
 import com.alexandros.dailycompanion.model.JournalEntry;
 import com.alexandros.dailycompanion.model.User;
@@ -17,7 +22,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

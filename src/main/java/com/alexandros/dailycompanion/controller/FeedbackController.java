@@ -1,9 +1,14 @@
+/*
+ * Copyright (c) 2025 Alexandros Kazalis
+ *
+ * Licensed under the MIT License. See LICENSE file in the project root for details.
+ */
+
 package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.FeedbackDto;
 import com.alexandros.dailycompanion.dto.FeedbackRequest;
 import com.alexandros.dailycompanion.dto.FeedbackUpdateRequest;
-import com.alexandros.dailycompanion.model.Feedback;
 import com.alexandros.dailycompanion.service.FeedbackService;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;

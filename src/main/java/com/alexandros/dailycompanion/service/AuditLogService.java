@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2025 Alexandros Kazalis
+ *
+ * Licensed under the MIT License. See LICENSE file in the project root for details.
+ */
+
 package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.model.AuditLog;
@@ -6,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 

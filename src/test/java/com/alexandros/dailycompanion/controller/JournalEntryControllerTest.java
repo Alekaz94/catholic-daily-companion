@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2025 Alexandros Kazalis
+ *
+ * Licensed under the MIT License. See LICENSE file in the project root for details.
+ */
+
 package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.JournalEntryDto;
@@ -14,7 +20,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 

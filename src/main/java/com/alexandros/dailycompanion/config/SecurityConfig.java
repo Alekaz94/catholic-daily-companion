@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) 2025 Alexandros Kazalis
+ *
+ * Licensed under the MIT License. See LICENSE file in the project root for details.
+ */
+
 package com.alexandros.dailycompanion.config;
 
-//import com.alexandros.dailycompanion.security.FirebaseTokenFilter;
 import com.alexandros.dailycompanion.security.JwtRequestFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

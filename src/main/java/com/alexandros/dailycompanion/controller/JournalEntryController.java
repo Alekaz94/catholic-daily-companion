@@ -1,12 +1,16 @@
+/*
+ * Copyright (c) 2025 Alexandros Kazalis
+ *
+ * Licensed under the MIT License. See LICENSE file in the project root for details.
+ */
+
 package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.JournalEntryDto;
 import com.alexandros.dailycompanion.dto.JournalEntryRequest;
 import com.alexandros.dailycompanion.dto.JournalEntryUpdateRequest;
 import com.alexandros.dailycompanion.dto.PageResponse;
-import com.alexandros.dailycompanion.model.JournalEntry;
 import com.alexandros.dailycompanion.model.User;
-import com.alexandros.dailycompanion.service.AuditLogService;
 import com.alexandros.dailycompanion.service.JournalEntryService;
 import com.alexandros.dailycompanion.service.ServiceHelper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +25,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.file.AccessDeniedException;
-import java.security.Principal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
