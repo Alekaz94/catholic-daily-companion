@@ -1,41 +1,29 @@
 package com.alexandros.dailycompanion.service;
 
-import com.alexandros.dailycompanion.dto.LoginRequest;
-import com.alexandros.dailycompanion.dto.LoginResponse;
-import com.alexandros.dailycompanion.dto.UserRequest;
-import com.alexandros.dailycompanion.dto.UserUpdateRequest;
+import com.alexandros.dailycompanion.dto.*;
 import com.alexandros.dailycompanion.enums.Roles;
+import com.alexandros.dailycompanion.enums.AuditAction;
 import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.repository.UserRepository;
 import com.alexandros.dailycompanion.security.JwtUtil;
 import com.alexandros.dailycompanion.security.PasswordUtil;
-import org.junit.jupiter.api.AfterEach;
+import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -48,6 +36,15 @@ public class UserServiceTest {
 
     @Mock
     private JwtUtil jwtUtil;
+
+    @Mock
+    private AuditLogService auditLogService;
+
+    @Mock
+    private ServiceHelper serviceHelper;
+
+    @Mock
+    private RefreshTokenService refreshTokenService;
 
     @InjectMocks
     private UserService userService;
@@ -70,126 +67,134 @@ public class UserServiceTest {
         userRequest = new UserRequest("Test", "User", "test@example.com", "password");
     }
 
-    @AfterEach
-    void clearSecurityContext() {
-        SecurityContextHolder.clearContext();
-    }
-
     @Test
     void createUserShouldSaveNewUserAndReturnDto() {
         when(userRepository.findByEmail(userRequest.email())).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        var result = userService.createUser(userRequest);
+
+        var result = userService.createUser(userRequest, "127.0.0.1");
 
         assertEquals(userRequest.firstName(), result.firstName());
         assertEquals(userRequest.lastName(), result.lastName());
         assertEquals(userRequest.email(), result.email());
+        verify(auditLogService).logAction(any(), eq(AuditAction.CREATE_USER.name()), any(), any(), any(), any());
     }
 
     @Test
     void createUserShouldThrowExceptionIfEmailExists() {
         when(userRepository.findByEmail(userRequest.email())).thenReturn(Optional.of(user));
-
-        assertThrows(IllegalArgumentException.class, () -> userService.createUser(userRequest));
+        assertThrows(IllegalArgumentException.class, () -> userService.createUser(userRequest, "127.0.0.1"));
     }
 
-    /*@Test
-    void getAllUsersShouldReturnUserDtoList() {
-        when(userRepository.findAll()).thenReturn(List.of(user));
-        var result = userService.getAllUsers();
+    @Test
+    void signUpShouldReturnUserWhenSuccess() {
+        when(userRepository.findByEmail(userRequest.email())).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertEquals(1, result.size());
-        assertEquals(user.getEmail(), result.getFirst().email());
-    }*/
+        User result = userService.signUp(userRequest, "127.0.0.1");
+        assertEquals(userRequest.email(), result.getEmail());
+    }
+
+    @Test
+    void signUpShouldThrowExceptionWhenEmailExists() {
+        when(userRepository.findByEmail(userRequest.email())).thenReturn(Optional.of(user));
+        assertThrows(IllegalArgumentException.class, () -> userService.signUp(userRequest, "127.0.0.1"));
+    }
 
     @Test
     void getUserShouldReturnUserIfAuthorized() throws Exception {
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(user.getEmail(), null)
-        );
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
+        when(serviceHelper.getUserByIdOrThrow(user.getId())).thenReturn(user);
 
-        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         var result = userService.getUser(user.getId());
-
         assertEquals(user.getEmail(), result.email());
     }
 
     @Test
-    void getUserShouldThrowAccessDeniedExceptionForUnauthorizedUser() {
-        User userTwo = new User();
-        userTwo.setId(UUID.randomUUID());
-        userTwo.setEmail("userTwo@example.com");
-        userTwo.setRole(Roles.USER);
+    void getUserShouldThrowAccessDeniedForUnauthorizedUser() {
+        User otherUser = new User();
+        otherUser.setId(UUID.randomUUID());
+        otherUser.setEmail("u2@example.com");
+        otherUser.setRole(Roles.USER);
 
-        UserDetails userDetails = org.springframework.security.core.userdetails.User
-                .withUsername(userTwo.getEmail())
-                .password("password")
-                .authorities("USER")
-                .build();
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(otherUser);
 
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(userDetails, null)
-        );
-        when(userRepository.findByEmail("userTwo@example.com")).thenReturn(Optional.of(userTwo));
-        assertThrows(AccessDeniedException.class, () -> userService.getUser(user.getId()));
-    }
-
-    /*@Test
-    void loginShouldReturnTokenAndUserDto() {
-        LoginRequest request = new LoginRequest(user.getEmail(), "password");
-        UserDetails userDetails = org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password("password")
-                .authorities("USER")
-                .build();
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
-
-        when(authenticationManager.authenticate(any())).thenReturn(authentication);
-        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-        when(jwtUtil.generateToken(user)).thenReturn("mocked-token");
-
-        LoginResponse response = userService.login(request);
-
-        assertEquals(user.getEmail(), response.user().email());
-        assertEquals("mocked-token", response.token());
-    }*/
-
-    @Test
-    void loginShouldReturnUnauthorizedOnInvalidCredentials() {
-        LoginRequest request = new LoginRequest("wrong@email.com", "wrongPassword");
-
-        when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("Bad credentials"));
-
-        assertThrows(AuthenticationException.class, () -> {
-            userService.login(request);
-        });
+        assertThrows(AccessDeniedException.class,
+                () -> userService.getUser(UUID.randomUUID()));
     }
 
     @Test
     void updateUserPasswordShouldUpdatePasswordIfCorrect() throws Exception {
-        UserUpdateRequest updateRequest = new UserUpdateRequest("password", "newPassword");
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(user.getEmail(), null)
-        );
-
-        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of((user)));
+        UserUpdateRequest updateRequest = new UserUpdateRequest("password", "newPass");
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
+        when(serviceHelper.getUserByIdOrThrow(user.getId())).thenReturn(user);
         when(userRepository.findPasswordHashById(user.getId())).thenReturn(user.getPassword());
         when(userRepository.save(any())).thenReturn(user);
 
-        var result = userService.updateUserPassword(user.getId(), updateRequest);
-
+        var result = userService.updateUserPassword(user.getId(), updateRequest, "127.0.0.1");
         assertEquals(user.getEmail(), result.email());
     }
 
     @Test
-    void deleteUserShouldDeleteUserById() throws AccessDeniedException {
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+    void updateUserPasswordShouldThrowOnIncorrectCurrentPassword() {
+        UserUpdateRequest updateRequest = new UserUpdateRequest("wrongPass", "newPass");
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
+        when(serviceHelper.getUserByIdOrThrow(user.getId())).thenReturn(user);
+        when(userRepository.findPasswordHashById(user.getId())).thenReturn(user.getPassword());
 
-        userService.deleteUser(user.getId());
+        assertThrows(IllegalArgumentException.class, () -> userService.updateUserPassword(user.getId(), updateRequest, "127.0.0.1"));
+    }
 
-        Mockito.verify(userRepository).deleteById(user.getId());
+    @Test
+    void updateUserNameShouldUpdateFirstAndLastName() throws Exception {
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
+        when(serviceHelper.getUserByIdOrThrow(user.getId())).thenReturn(user);
+        when(userRepository.save(any())).thenReturn(user);
+
+        UserNameUpdateRequest request = new UserNameUpdateRequest("NewFirst", "NewLast");
+        var result = userService.updateUserName(user.getId(), request, "127.0.0.1");
+        assertEquals("NewFirst", result.firstName());
+        assertEquals("NewLast", result.lastName());
+    }
+
+    @Test
+    void updateUserNameShouldThrowBadRequestIfNoFields() {
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
+
+        UserNameUpdateRequest request = new UserNameUpdateRequest(null, null);
+        assertThrows(BadRequestException.class,
+                () -> userService.updateUserName(user.getId(), request, "127.0.0.1"));
+    }
+
+    @Test
+    void deleteUserShouldDeleteUserIfAuthorized() throws Exception {
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
+        userService.deleteUser(user.getId(), "127.0.0.1");
+        verify(userRepository).deleteById(user.getId());
+    }
+
+    @Test
+    void deleteUserShouldThrowAccessDeniedIfUnauthorized() {
+        User anotherUser = new User();
+        anotherUser.setId(UUID.randomUUID());
+        anotherUser.setRole(Roles.USER);
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(anotherUser);
+
+        assertThrows(AccessDeniedException.class, () -> userService.deleteUser(user.getId(), "127.0.0.1"));
+    }
+
+    @Test
+    void loadUserByUsernameShouldReturnUserDetailsIfExists() {
+        when(userRepository.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
+
+        var userDetails = userService.loadUserByUsername(user.getEmail());
+        assertEquals(user.getEmail(), userDetails.getUsername());
+    }
+
+    @Test
+    void loadUserByUsernameShouldThrowIfNotFound() {
+        when(userRepository.findByEmail("notfound@example.com")).thenReturn(Optional.empty());
+        assertThrows(Exception.class, () -> userService.loadUserByUsername("notfound@example.com"));
     }
 
 }

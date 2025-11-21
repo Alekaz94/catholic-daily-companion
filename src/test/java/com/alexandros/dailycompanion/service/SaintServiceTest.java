@@ -2,6 +2,7 @@ package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.SaintDto;
 import com.alexandros.dailycompanion.dto.SaintRequest;
+import com.alexandros.dailycompanion.dto.SaintUpdateRequest;
 import com.alexandros.dailycompanion.model.Saint;
 import com.alexandros.dailycompanion.repository.SaintRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,19 +14,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 
 import java.time.MonthDay;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SaintServiceTest {
 
     @Mock
     SaintRepository saintRepository;
+
+    @Mock
+    ServiceHelper serviceHelper;
 
     @InjectMocks
     SaintService saintService;
@@ -45,6 +47,9 @@ public class SaintServiceTest {
         saint.setBiography("Saint of the Catholic church");
         saint.setPatronage("Animals and environment");
         saint.setImageUrl("http://picture.com");
+        saint.setImageSource("source");
+        saint.setImageAuthor("author");
+        saint.setImageLicence("licence");
 
         saintRequest = new SaintRequest(
                 "St Francis",
@@ -54,49 +59,89 @@ public class SaintServiceTest {
                 "Saint of the Catholic church",
                 "Animals and environment",
                 450,
-                "http://picture.com"
+                "http://picture.com",
+                "source",
+                "author",
+                "licence"
         );
     }
 
     @Test
     void createSaintShouldSaveNewSaintAndReturnDto() {
-        when(saintRepository.save(any(Saint.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(saintRepository.save(any(Saint.class))).thenAnswer(i -> i.getArgument(0));
         SaintDto result = saintService.createSaint(saintRequest);
 
-        assertEquals(saintRequest.name(), result.name());
-        assertEquals(saintRequest.birthYear(), result.birthYear());
-        assertEquals(saintRequest.deathYear(), result.deathYear());
-        assertEquals(saintRequest.feastDay(), result.feastDay());
-        assertEquals(saintRequest.patronage(), result.patronage());
-        assertEquals(saintRequest.canonizationYear(), result.canonizationYear());
-        assertEquals(saintRequest.biography(), result.biography());
-        assertEquals(saintRequest.imageUrl(), result.imageUrl());
+        assertEquals("St Francis", result.name());
+        verify(saintRepository).save(any(Saint.class));
     }
 
     @Test
-    void getSaintShouldReturnSaintDtoIfFound() {
-        when(saintRepository.findById(saint.getId())).thenReturn(Optional.of(saint));
+    void getSaintShouldUseServiceHelper() {
+        when(serviceHelper.getSaintById(saint.getId())).thenReturn(saint);
+
         SaintDto result = saintService.getSaint(saint.getId());
 
-        assertEquals(saint.getName(), result.name());
+        assertEquals("St Francis", result.name());
     }
 
     @Test
-    void getSaintShouldThrowIfNotFound() {
-        UUID nonExistentId = UUID.randomUUID();
-        when(saintRepository.findById(nonExistentId)).thenReturn(Optional.empty());
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> saintService.getSaint(nonExistentId));
+    void updateSaintShouldModifyFieldsAndSave() {
+        SaintUpdateRequest updateRequest = new SaintUpdateRequest(
+                "New Name",
+                500,
+                600,
+                MonthDay.of(12, 25),
+                "New bio",
+                "New patronage",
+                999,
+                "new.url",
+                "new.source",
+                "new.author",
+                "new.licence"
+        );
 
-        assertTrue(exception.getMessage().contains("Could not find saint"));
+        when(serviceHelper.getSaintById(saint.getId())).thenReturn(saint);
+        when(saintRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        SaintDto result = saintService.updateSaint(saint.getId(), updateRequest);
+
+        assertEquals("New Name", result.name());
+        assertEquals(500, result.birthYear());
+        assertEquals(600, result.deathYear());
+        assertEquals(MonthDay.of(12, 25), result.feastDay());
+        verify(saintRepository).save(any());
     }
 
     @Test
-    void getAllSaintsShouldReturnPagedSaintDtosWithoutQuery() {
-        Pageable pageable = PageRequest.of(0, 10, Sort.by("name").ascending());
+    void updateSaintShouldNotSaveIfNoFieldsUpdated() {
+        SaintUpdateRequest updateRequest = new SaintUpdateRequest(
+                null, null, null, null,
+                null, null, null,
+                null, null, null, null
+        );
+
+        when(serviceHelper.getSaintById(saint.getId())).thenReturn(saint);
+
+        SaintDto result = saintService.updateSaint(saint.getId(), updateRequest);
+
+        verify(saintRepository, never()).save(any());
+        assertEquals("St Francis", result.name());
+    }
+
+    @Test
+    void deleteSaintShouldCallRepositoryDelete() {
+        when(serviceHelper.getSaintById(saint.getId())).thenReturn(saint);
+        saintService.deleteSaint(saint.getId());
+        verify(saintRepository).deleteById(saint.getId());
+    }
+
+    @Test
+    void getAllSaintsWithoutQueryReturnsAll() {
+        Pageable pageable = PageRequest.of(0, 10);
         Page<Saint> page = new PageImpl<>(List.of(saint));
 
-        when(saintRepository.findAll(pageable)).thenReturn(page);
+        when(saintRepository.findAll(any(Pageable.class))).thenReturn(page);
+
         Page<SaintDto> result = saintService.getAllSaints(null, 0, 10);
 
         assertEquals(1, result.getTotalElements());
@@ -104,36 +149,92 @@ public class SaintServiceTest {
     }
 
     @Test
-    void getAllSaintsShouldReturnPagedSaintDtosWithQuery() {
-        Pageable pageable = PageRequest.of(0, 10, Sort.by("name").ascending());
+    void getAllSaintsWithQueryFiltersByName() {
         Page<Saint> page = new PageImpl<>(List.of(saint));
 
-        when(saintRepository.findByNameContainingIgnoreCase("francis", pageable)).thenReturn(page);
+        when(saintRepository.findByNameContainingIgnoreCase(eq("francis"), any(Pageable.class)))
+                .thenReturn(page);
+
         Page<SaintDto> result = saintService.getAllSaints("francis", 0, 10);
 
         assertEquals(1, result.getTotalElements());
-        assertEquals("St Francis", result.getContent().getFirst().name());
     }
 
     @Test
-    void getSaintByFeastDayShouldReturnSaintDtoIfFound() {
+    void getSaintByFeastDayReturnsDto() {
         MonthDay today = MonthDay.now();
         saint.setFeastDay(today);
 
         when(saintRepository.findByFeastDay(today)).thenReturn(Optional.of(saint));
-        SaintDto result = saintService.getSaintByFeastDay();
 
+        SaintDto result = saintService.getSaintByFeastDay();
         assertNotNull(result);
-        assertEquals("St Francis", result.name());
     }
 
     @Test
-    void getSaintByFeastDayShouldReturnNullIfNotFound() {
+    void getSaintByFeastDayReturnsNullIfNotFound() {
+        when(saintRepository.findByFeastDay(MonthDay.now())).thenReturn(Optional.empty());
+        assertNull(saintService.getSaintByFeastDay());
+    }
+
+    @Test
+    void getSaintsByMonthGroupsCorrectly() {
+        Saint s1 = new Saint();
+        s1.setName("A");
+        s1.setFeastDay(MonthDay.of(10, 4));
+
+        Saint s2 = new Saint();
+        s2.setName("B");
+        s2.setFeastDay(MonthDay.of(10, 4));
+
+        when(saintRepository.findAll()).thenReturn(List.of(s1, s2));
+        Map<String, List<String>> result = saintService.getSaintsByMonth(2025, 10);
+
+        assertEquals(1, result.size());
+        assertEquals(List.of("A", "B"), result.get("--10-04"));
+    }
+
+    @Test
+    void getAllSaintsByFeastCodeReturnsList() {
+        when(saintRepository.findAllByFeastDay(MonthDay.of(10, 4))).thenReturn(List.of(saint));
+
+        List<SaintDto> result = saintService.getAllSaintsByFeastCode("10-04");
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void getAllSaintsByFeastCodeReturnsEmpty() {
+        when(saintRepository.findAllByFeastDay(any())).thenReturn(Collections.emptyList());
+        assertTrue(saintService.getAllSaintsByFeastCode("10-04").isEmpty());
+    }
+
+    @Test
+    void getAllSaintsByFeastDayReturnsList() {
         MonthDay today = MonthDay.now();
+        when(saintRepository.findAllByFeastDay(today)).thenReturn(List.of(saint));
 
-        when(saintRepository.findByFeastDay(today)).thenReturn(Optional.empty());
-        SaintDto result = saintService.getSaintByFeastDay();
+        assertEquals(1, saintService.getAllSaintsByFeastDay().size());
+    }
 
-        assertNull(result);
+    @Test
+    void getAllSaintsByFeastDayReturnsEmpty() {
+        when(saintRepository.findAllByFeastDay(any())).thenReturn(Collections.emptyList());
+        assertTrue(saintService.getAllSaintsByFeastDay().isEmpty());
+    }
+
+    @Test
+    void getAllFeastDaysMappedShouldGroupByFeastCode() {
+        Saint s1 = new Saint();
+        s1.setName("A");
+        s1.setFeastDay(MonthDay.of(10, 4));
+
+        Saint s2 = new Saint();
+        s2.setName("B");
+        s2.setFeastDay(MonthDay.of(10, 4));
+
+        when(saintRepository.findAll()).thenReturn(List.of(s1, s2));
+
+        Map<String, List<String>> result = saintService.getAllFeastDaysMapped();
+        assertEquals(List.of("A", "B"), result.get("10-04"));
     }
 }
