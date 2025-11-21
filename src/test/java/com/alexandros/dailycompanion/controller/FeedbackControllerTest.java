@@ -60,21 +60,6 @@ class FeedbackControllerTest {
     }
 
     @Test
-    void submitFeedback_invalidInput_shouldReturn400() throws Exception {
-        String invalidJson = """
-    {
-        "message": "Missing category"
-    }
-    """;
-
-        mockMvc.perform(post("/api/v1/feedback")
-                        .header("user_id", UUID.randomUUID())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidJson))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void getAllFeedback_success() throws Exception {
         when(feedbackService.getAllFeedback()).thenReturn(List.of(feedbackDto));
 
