@@ -44,6 +44,7 @@ public class SecurityConfig {
                         auth.requestMatchers("/api/v1/auth/**").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/v1/firebase-auth/firebase-login").permitAll()
                                 .requestMatchers("/privacy-policy.html").permitAll()
+                                .requestMatchers("/terms-of-service.html").permitAll()
                                 .requestMatchers("/images/**", "/css/**", "/js/**", "/webjars/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/saint/today").permitAll()
                                 .requestMatchers(HttpMethod.GET,"/api/v1/saint/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
