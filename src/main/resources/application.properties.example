@@ -14,9 +14,15 @@ spring.jpa.properties.hibernate.format_sql=true
 # JWT settings
 jwt.secret=your_random_base64_string_here
 jwt.expiration=3600 # in seconds
+jwt.refreshExpiration=604800
 
 # Admin account for CommandLineRunner
 admin.default.email=your-email@example.com
 admin.default.password=your-secure-password
 
-app.cors.allowed-origins=http://localhost:8080
+app.cors.allowed-origins=http://localhost:8081
+app.cors.allowed-origins[1]=http://localhost:8081
+server.address=0.0.0.0
+server.port=8080
+
+logging.level.org.springframework.security=DEBUG
