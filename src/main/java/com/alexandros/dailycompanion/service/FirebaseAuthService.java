@@ -19,6 +19,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -28,12 +29,15 @@ import java.util.Optional;
 @Service
 public class FirebaseAuthService {
     private final static Logger logger = LoggerFactory.getLogger(FirebaseAuthService.class);
+
+    private final Environment env;
     private final FirebaseAuth firebaseAuth;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
 
-    public FirebaseAuthService(UserRepository userRepository, JwtUtil jwtUtil, RefreshTokenService refreshTokenService) {
+    public FirebaseAuthService(Environment env, UserRepository userRepository, JwtUtil jwtUtil, RefreshTokenService refreshTokenService) {
+        this.env = env;
         this.refreshTokenService = refreshTokenService;
         this.firebaseAuth = FirebaseAuth.getInstance();
         this.userRepository = userRepository;
@@ -41,6 +45,7 @@ public class FirebaseAuthService {
     }
 
     public User createOrGetUser(String email, String firstName) {
+        String adminEmail = env.getProperty("ADMIN_EMAIL");
         try {
             return userRepository.findByEmail(email)
                     .orElseGet(() -> {
@@ -49,14 +54,24 @@ public class FirebaseAuthService {
                         newUser.setEmail(email);
                         newUser.setFirstName(firstName != null ? firstName : "User");
                         newUser.setLastName("");
-                        newUser.setRole(Roles.USER);
+                        if(email.equalsIgnoreCase(adminEmail)) {
+                            newUser.setRole(Roles.ADMIN);
+                        } else {
+                            newUser.setRole(Roles.USER);
+                        }
                         newUser.setCreatedAt(now);
                         newUser.setUpdatedAt(now);
                         return userRepository.save(newUser);
                     });
         } catch (DataIntegrityViolationException e) {
-            return userRepository.findByEmail(email)
+            User existingUser = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalStateException("User should exist after insert."));
+
+            if(existingUser.getEmail().equalsIgnoreCase(adminEmail)) {
+                existingUser.setRole(Roles.ADMIN);
+                userRepository.save(existingUser);
+            }
+            return existingUser;
         }
     }
 
