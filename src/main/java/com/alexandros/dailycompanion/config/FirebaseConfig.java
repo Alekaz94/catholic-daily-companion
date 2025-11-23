@@ -10,23 +10,30 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import javax.annotation.PostConstruct;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 @Configuration
 public class FirebaseConfig {
 
+    private final Environment env;
+
+    public FirebaseConfig(Environment env) {
+        this.env = env;
+    }
+
     @PostConstruct
     public void initFirebase() throws IOException {
-        InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("firebase/ServiceAccountKey.json");
+        String firebaseCredentials = env.getProperty("FIREBASE_CREDENTIALS");
 
-        if(serviceAccount == null) {
-            throw new FileNotFoundException("firebase/ServiceAccountKey.json not found in classpath");
+        if(firebaseCredentials == null || firebaseCredentials.isBlank()) {
+            throw new IllegalStateException("FIREBASE_CREDENTIALS environment variable is not set");
         }
+
+        ByteArrayInputStream serviceAccount = new ByteArrayInputStream(firebaseCredentials.getBytes(StandardCharsets.UTF_8));
 
         FirebaseOptions options = FirebaseOptions
                 .builder()
