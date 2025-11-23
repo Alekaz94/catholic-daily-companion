@@ -20,8 +20,10 @@ jwt.refreshExpiration=604800
 admin.default.email=your-email@example.com
 admin.default.password=your-secure-password
 
+# CORS
 app.cors.allowed-origins=http://localhost:8081
 app.cors.allowed-origins[1]=http://localhost:8081
+
 server.address=0.0.0.0
 server.port=8080
 
