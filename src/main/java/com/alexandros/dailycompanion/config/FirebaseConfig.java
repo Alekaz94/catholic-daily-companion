@@ -32,6 +32,7 @@ public class FirebaseConfig {
         if(firebaseCredentials == null || firebaseCredentials.isBlank()) {
             throw new IllegalStateException("FIREBASE_CREDENTIALS environment variable is not set");
         }
+        firebaseCredentials = firebaseCredentials.replace("\\n", "\n");
 
         ByteArrayInputStream serviceAccount = new ByteArrayInputStream(firebaseCredentials.getBytes(StandardCharsets.UTF_8));
 
