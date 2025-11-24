@@ -57,6 +57,9 @@ public class DataSeeder {
                 saint.setPatronage(saintDto.patronage());
                 saint.setCanonizationYear(saintDto.canonizationYear());
                 saint.setImageUrl(saintDto.imageUrl());
+                saint.setImageSource(saintDto.imageSource());
+                saint.setImageAuthor(saintDto.imageAuthor());
+                saint.setImageLicence(saintDto.imageLicence());
                 return saint;
             }).toList();
 
