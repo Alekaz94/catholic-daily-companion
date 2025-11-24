@@ -34,6 +34,7 @@ public class User {
     private String lastName;
     @Column(unique = true, nullable = false)
     private String email;
+    @Column(nullable = true)
     private String password;
     private LocalDate createdAt;
     private LocalDate updatedAt;
