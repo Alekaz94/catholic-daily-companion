@@ -34,7 +34,6 @@ build/
 
 # Environment
 /src/main/resources/application.properties
-/src/main/resources/application-dev.properties
 .env
 
 # Firebase service account
