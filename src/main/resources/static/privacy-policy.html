@@ -2,118 +2,119 @@
 <html lang="en">
 <head>
    <meta charset="UTF-8">
-   <title>Privacy Policy – Catholic Daily Companion</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Privacy Policy - Catholic Daily Companion</title>
    <style>
       body {
           font-family: Arial, sans-serif;
+          background-color: #f2f2f2;
+          color: #333;
+          margin: 0;
+          padding: 0;
+      }
+      .container {
           max-width: 800px;
-          margin: 40px auto;
+          margin: 0 auto;
           padding: 20px;
-          line-height: 1.6;
+          background-color: #fff;
+      }
+      h1, h2 {
           text-align: center;
-      }
-      h1 {
           font-weight: 600;
-          font-size: 26px;
-      }
-      h2 {
-          margin-top: 30px;
-          font-size: 20px;
       }
       p {
-          margin-top: 12px;
+          margin: 10px 0;
+          line-height: 1.5;
       }
-      .small {
-          color: #666;
-          font-style: italic;
-          margin-top: 30px;
+      .small-text {
           font-size: 12px;
+          font-style: italic;
+          color: #888;
+          text-align: center;
+          margin-top: 30px;
+      }
+      .bold {
+          font-weight: 600;
       }
    </style>
 </head>
-
 <body>
-<h1>Privacy Policy</h1>
-<p><strong>Last updated: November 21, 2025</strong></p>
 
-<p>
-   Thank you for using <strong>Catholic Daily Companion</strong> ("we", "our", or "us").
-   Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information.
-</p>
+<div class="container">
+   <h1>Privacy Policy</h1>
+   <p style="text-align:center;">Last updated: November 21, 2025</p>
 
-<p>
-   By using the app, you agree to the terms of this Privacy Policy.
-</p>
+   <p>Thank you for using <span class="bold">Catholic Daily Companion</span> ("we", "our", or "us"). Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information.</p>
 
-<h2>Information We Collect</h2>
-<p>
-   - Full name<br>
-   - Email address<br>
-   - Google account information (if signing in via Google)<br>
-   - IP address (collected automatically by our backend)<br>
-   - Journal entries you create<br>
-   - Rosary logs, history of prayed rosary, and prayed rosary streaks<br>
-   - Audit logs for security and debugging
-</p>
+   <p>By using the app, you agree to the terms of this Privacy Policy.</p>
 
-<h2>What We Do NOT Collect</h2>
-<p>
-   - We do NOT collect or store your Google password.<br>
-   - We do NOT receive sensitive Google data such as contacts or files
-</p>
+   <h2>Information We Collect:</h2>
+   <p>
+      - Full name<br>
+      - Email address<br>
+      - Google account information (if signing in via Google)<br>
+      - IP address (collected automatically by our backend)<br>
+      - Journal entries you create<br>
+      - Rosary logs, history of prayed rosary, and prayed rosary streaks<br>
+      - Audit logs for security and debugging
+   </p>
 
-<h2>How We Use Your Information</h2>
-<p>
-   - To authenticate you securely through Google<br>
-   - To display your journal entries and rosary history<br>
-   - To maintain your rosary streaks<br>
-   - To improve app performance (e.g., caching saints)<br>
-   - To comply with legal requirements
-</p>
+   <h2>What We Do NOT Collect:</h2>
+   <p>
+      - We do NOT collect or store your Google password.<br>
+      - We do NOT receive sensitive Google data such as contacts or files
+   </p>
 
-<h2>Ads & Analytics</h2>
-<p>
-   We use Google Mobile Ads. Only anonymized usage data may be collected for ad performance.
-   We do not share your personal data with advertisers.
-</p>
+   <h2>How We Use Your Information:</h2>
+   <p>
+      - To authenticate you securely through Google<br>
+      - To display your journal entries and rosary history<br>
+      - To maintain your rosary streaks<br>
+      - To improve app performance (e.g., caching saints)<br>
+      - To comply with legal obligations
+   </p>
 
-<h2>Data Security</h2>
-<p>
-   We use HTTPS, secure token-based authentication, and industry-standard measures.
-   Since no password is ever stored by us, that sensitive data never enters our system.
-</p>
+   <h2>Third-Party Services We Use</h2>
+   <p>
+      <span class="bold">Google Authentication (OAuth2)</span><br>
+      Used for secure sign-in. Only name and email are received; no password.<br><br>
 
-<h2>Your Rights</h2>
-<p>
-   You may view, modify, or delete your data by contacting:<br><br>
-   <strong>alexandros.kazalis@gmail.com</strong>
-</p>
+      <span class="bold">Google Mobile Ads (AdMob)</span><br>
+      Displays ads. Only anonymized usage and device data may be collected.<br><br>
 
-<h2>GDPR Rights</h2>
-<p>
-   EU users retain rights to access, correct, delete, or export their data.
-   Most of these actions can be performed directly in the app.
-</p>
+      <span class="bold">Railway Hosting</span><br>
+      Backend and database are hosted on Railway.<br><br>
 
-<h2>Data Retention</h2>
-<p>
-   Data is stored until you delete your account.
-   Journal entries can be deleted at any time.
-</p>
+      <span class="bold">PostgreSQL Database</span><br>
+      Stores journal entries, rosary data, account info, logs, and content.<br><br>
 
-<h2>Children’s Privacy</h2>
-<p>
-   We do not knowingly collect data from children under 13.
-   Parental supervision is recommended for young users.
-</p>
+      <span class="bold">Expo / React Native Services</span><br>
+      May collect anonymized diagnostics to improve app performance.
+   </p>
 
-<h2>Changes to This Policy</h2>
-<p>
-   If the policy changes, we will notify users in the app or by email.
-</p>
+   <h2>Ads & Analytics:</h2>
+   <p>We use Google Mobile Ads. Only anonymized usage data may be collected. Personal data is not shared with advertisers.</p>
 
-<p class="small">
-   App package: com.alexandros.dailycompanion
-</p>
+   <h2>Data Security:</h2>
+   <p>We use HTTPS, secure token-based authentication, and industry-standard measures. No password is ever stored.</p>
+
+   <h2>Your Rights:</h2>
+   <p>You may view, update, or delete your data by contacting: alexandros.kazalis@gmail.com</p>
+
+   <h2>GDPR Rights:</h2>
+   <p>EU users can access, correct, delete, or export their data. Most actions can be performed in-app.</p>
+
+   <h2>Data Retention:</h2>
+   <p>Your data is stored until you delete your account. Journal entries can be deleted anytime.</p>
+
+   <h2>Children’s Privacy:</h2>
+   <p>We do not knowingly collect data from children under 13. Parental supervision is recommended.</p>
+
+   <h2>Changes to This Policy:</h2>
+   <p>If the policy changes, we will notify users in the app or by email.</p>
+
+   <p class="small-text">App package: com.alexandros.dailycompanion</p>
+</div>
+
 </body>
 </html>
