@@ -12,6 +12,8 @@ import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.UserDtoMapper;
 import com.alexandros.dailycompanion.model.RefreshToken;
 import com.alexandros.dailycompanion.model.User;
+import com.alexandros.dailycompanion.repository.JournalEntryRepository;
+import com.alexandros.dailycompanion.repository.RosaryLogRepository;
 import com.alexandros.dailycompanion.repository.UserRepository;
 import com.alexandros.dailycompanion.security.JwtUtil;
 import com.alexandros.dailycompanion.security.PasswordUtil;
@@ -34,6 +36,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
@@ -50,15 +53,19 @@ public class UserService implements UserDetailsService {
     private final JwtUtil jwtUtil;
     private final ServiceHelper serviceHelper;
     private final RefreshTokenService refreshTokenService;
+    private final JournalEntryRepository journalEntryRepository;
+    private final RosaryLogRepository rosaryLogRepository;
 
     @Autowired
-    public UserService(AuditLogService auditLogService, @Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil, ServiceHelper serviceHelper, RefreshTokenService refreshTokenService) {
+    public UserService(AuditLogService auditLogService, @Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil, ServiceHelper serviceHelper, RefreshTokenService refreshTokenService, JournalEntryRepository journalEntryRepository, RosaryLogRepository rosaryLogRepository) {
         this.auditLogService = auditLogService;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.serviceHelper = serviceHelper;
         this.refreshTokenService = refreshTokenService;
+        this.journalEntryRepository = journalEntryRepository;
+        this.rosaryLogRepository = rosaryLogRepository;
     }
 
     public Page<UserDto> getAllUsers(String query, int page, int size, String sortBy, String sortDir) {
@@ -182,11 +189,16 @@ public class UserService implements UserDetailsService {
         return UserDtoMapper.toUserDto(user);
     }
 
+    @Transactional
     public void deleteUser(UUID userId, String ipAddress) throws AccessDeniedException {
         User currentUser = serviceHelper.getAuthenticatedUser();
         if(!currentUser.getRole().equals(Roles.ADMIN) && !currentUser.getId().equals(userId)) {
             throw new AccessDeniedException("You are not allowed to this user's information");
         }
+
+        refreshTokenService.deleteAllByUserId(userId);
+        journalEntryRepository.deleteAllByUserId(userId);
+        rosaryLogRepository.deleteAllByUserId(userId);
 
         auditLogService.logAction(
                 currentUser.getId(),
@@ -197,8 +209,8 @@ public class UserService implements UserDetailsService {
                 ipAddress
         );
 
-        logger.warn("Deleted user '{}'", currentUser.getId());
-        userRepository.deleteById(currentUser.getId());
+        logger.warn("Deleted user '{}'", userId);
+        userRepository.deleteById(userId);
     }
 
     public LoginResponse login(@Valid LoginRequest loginRequest) {
@@ -231,6 +243,16 @@ public class UserService implements UserDetailsService {
             user.setUpdatedAt(LocalDate.now());
             user.setRole(Roles.USER);
             userRepository.save(user);
+
+            auditLogService.logAction(
+                    user.getId(),
+                    "SIGNUP_USER",
+                    "User",
+                    user.getId(),
+                    "{\"passwordChange\": true}",
+                    ipAddress
+            );
+
             return user;
         } catch (DataIntegrityViolationException e) {
             throw new IllegalArgumentException("Email already registered!");

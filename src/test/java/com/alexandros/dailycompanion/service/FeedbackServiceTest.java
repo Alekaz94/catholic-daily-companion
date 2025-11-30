@@ -34,6 +34,9 @@ public class FeedbackServiceTest {
     @Mock
     private ServiceHelper serviceHelper;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     @InjectMocks
     private FeedbackService feedbackService;
 
@@ -60,13 +63,13 @@ public class FeedbackServiceTest {
 
     @Test
     void submitFeedbackWithUser() {
-        feedbackService.submitFeedback(user.getId(), feedbackRequest);
+        feedbackService.submitFeedback(user.getId(), feedbackRequest, "127.0.0.1");
         verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
 
     @Test
     void submitFeedbackWithoutUser() {
-        feedbackService.submitFeedback(null, feedbackRequest);
+        feedbackService.submitFeedback(null, feedbackRequest, "127.0.0.1");
         verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
 

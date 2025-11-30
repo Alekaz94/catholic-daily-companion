@@ -9,6 +9,7 @@ package com.alexandros.dailycompanion.service;
 import com.alexandros.dailycompanion.dto.FeedbackDto;
 import com.alexandros.dailycompanion.dto.FeedbackRequest;
 import com.alexandros.dailycompanion.dto.FeedbackUpdateRequest;
+import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.FeedbackDtoMapper;
 import com.alexandros.dailycompanion.model.Feedback;
 import com.alexandros.dailycompanion.model.User;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,14 +29,16 @@ public class FeedbackService {
     private final static Logger logger = LoggerFactory.getLogger(FeedbackService.class);
     private final FeedbackRepository feedbackRepository;
     private final ServiceHelper serviceHelper;
+    private final AuditLogService auditLogService;
 
     @Autowired
-    public FeedbackService(FeedbackRepository feedbackRepository, ServiceHelper serviceHelper) {
+    public FeedbackService(FeedbackRepository feedbackRepository, ServiceHelper serviceHelper, AuditLogService auditLogService) {
         this.feedbackRepository = feedbackRepository;
         this.serviceHelper = serviceHelper;
+        this.auditLogService = auditLogService;
     }
 
-    public void submitFeedback(UUID userId, FeedbackRequest feedbackRequest) {
+    public void submitFeedback(UUID userId, FeedbackRequest feedbackRequest, String ipAddress) {
         Feedback feedback = new Feedback();
         feedback.setCategory(feedbackRequest.category());
         feedback.setMessage(feedbackRequest.message());
@@ -46,6 +50,16 @@ public class FeedbackService {
             User user = serviceHelper.getUserByIdOrThrow(userId);
             feedback.setUser(user);
         }
+
+        auditLogService.logAction(
+                userId,
+                "FEEDBACK SUBMITTED",
+                "Feedback",
+                feedback.getId(),
+                "Feedback submitted",
+                ipAddress
+        );
+
         feedbackRepository.save(feedback);
 
         logger.info("Feedback created | id={} | user={} | category={}", feedback.getId(), userId, feedbackRequest.category());
@@ -71,5 +85,15 @@ public class FeedbackService {
 
         logger.info("Feedback updated | id={} | fixed={}", id, feedbackUpdateRequest.isFixed());
         return FeedbackDtoMapper.toFeedbackDto(feedback);
+    }
+
+    public List<FeedbackDto> getAllFeedbackByUser(UUID userId) throws AccessDeniedException {
+        User user = serviceHelper.getAuthenticatedUser();
+
+        if(!user.getRole().equals(Roles.ADMIN) && !user.getId().equals(userId)) {
+            throw new AccessDeniedException("You cannot access another user's data.");
+        }
+
+        return FeedbackDtoMapper.toFeedbackDto(feedbackRepository.findAllByUserId(userId));
     }
 }

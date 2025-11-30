@@ -60,10 +60,9 @@ public class RefreshTokenService {
         }
     }
 
-    public int deleteByUser(UUID userId) {
-        User user = serviceHelper.getUserByIdOrThrow(userId);
+    public int deleteAllByUserId(UUID userId) {
         logger.info("Deleted all refresh tokens for userId={}", userId);
-        return refreshTokenRepository.deleteByUser(user);
+        return refreshTokenRepository.deleteByUserId(userId);
     }
 
     public Optional<RefreshToken> findByToken(String token) {

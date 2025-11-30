@@ -26,4 +26,6 @@ public interface RosaryLogRepository extends JpaRepository<RosaryLog, UUID> {
     List<RosaryLog> findAllByUserIdAndCompletedTrue(UUID userId);
 
     boolean existsByUserIdAndDate(UUID userId, LocalDate date);
+    
+    void deleteAllByUserId(UUID id);
 }

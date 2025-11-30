@@ -11,6 +11,7 @@ import com.alexandros.dailycompanion.dto.SaintRequest;
 import com.alexandros.dailycompanion.dto.SaintUpdateRequest;
 import com.alexandros.dailycompanion.mapper.SaintDtoMapper;
 import com.alexandros.dailycompanion.model.Saint;
+import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.repository.SaintRepository;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -31,11 +32,13 @@ public class SaintService {
     private final static Logger logger = LoggerFactory.getLogger(SaintService.class);
     private final SaintRepository saintRepository;
     private final ServiceHelper serviceHelper;
+    private final AuditLogService auditLogService;
 
     @Autowired
-    public SaintService(SaintRepository saintRepository, ServiceHelper serviceHelper) {
+    public SaintService(SaintRepository saintRepository, ServiceHelper serviceHelper, AuditLogService auditLogService) {
         this.saintRepository = saintRepository;
         this.serviceHelper = serviceHelper;
+        this.auditLogService = auditLogService;
     }
 
     public Page<SaintDto> getAllSaints(String query, int page, int size) {
@@ -62,7 +65,9 @@ public class SaintService {
                 .orElse(null);
     }
 
-    public SaintDto createSaint(@Valid SaintRequest saintRequest) {
+    public SaintDto createSaint(@Valid SaintRequest saintRequest, String ipAddress) {
+        User user = serviceHelper.getAuthenticatedUser();
+
         Saint saint = new Saint();
         saint.setName(saintRequest.name());
         saint.setBirthYear(saintRequest.birthYear());
@@ -76,11 +81,22 @@ public class SaintService {
         saint.setImageAuthor(saintRequest.imageAuthor());
         saint.setImageLicence(saintRequest.imageLicence());
         saintRepository.save(saint);
+
+        auditLogService.logAction(
+                user.getId(),
+                "CREATE_SAINT",
+                "Saint",
+                saint.getId(),
+                String.format("{\"ID\": \"%s\"}", saint.getId()),
+                ipAddress
+        );
+
         logger.info("Created saint '{}' (id={})", saint.getName(), saint.getId());
         return SaintDtoMapper.toSaintDto(saint);
     }
 
-    public SaintDto updateSaint(UUID saintId, SaintUpdateRequest saintUpdateRequest) {
+    public SaintDto updateSaint(UUID saintId, SaintUpdateRequest saintUpdateRequest, String ipAddress) {
+        User user = serviceHelper.getAuthenticatedUser();
         Saint currentSaint = serviceHelper.getSaintById(saintId);
         boolean updated = false;
 
@@ -131,14 +147,33 @@ public class SaintService {
 
         if(updated) {
             saintRepository.save(currentSaint);
+            auditLogService.logAction(
+                    user.getId(),
+                    "UPDATE_SAINT",
+                    "Saint",
+                    currentSaint.getId(),
+                    String.format("{\"ID\": \"%s\", \"Updated\": \"true\"}", currentSaint.getId()),
+                    ipAddress
+            );
             logger.info("Updated saint '{}' (id={})", currentSaint.getName(), currentSaint.getId());
         }
         return SaintDtoMapper.toSaintDto(currentSaint);
     }
 
-    public void deleteSaint(UUID saintId) {
+    public void deleteSaint(UUID saintId, String ipAddress) {
+        User user = serviceHelper.getAuthenticatedUser();
         Saint saint = serviceHelper.getSaintById(saintId);
         saintRepository.deleteById(saint.getId());
+
+        auditLogService.logAction(
+                user.getId(),
+                "DELETE_SAINT",
+                "Saint",
+                saint.getId(),
+                "{}",
+                ipAddress
+        );
+
         logger.info("Deleted saint '{}' (id={})", saint.getName(), saint.getId());
     }
 

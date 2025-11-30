@@ -8,6 +8,7 @@ package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.RosaryLogDto;
 import com.alexandros.dailycompanion.enums.AuditAction;
+import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.RosaryLogDtoMapper;
 import com.alexandros.dailycompanion.model.RosaryLog;
 import com.alexandros.dailycompanion.model.User;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -101,5 +103,16 @@ public class RosaryLogService {
 
     public boolean isCompletedOn(UUID userId, LocalDate date) {
         return rosaryLogRepository.existsByUserIdAndDate(userId, date);
+    }
+
+    public int getAmountOfPrayedRosaries(UUID userId) throws AccessDeniedException {
+        User user = serviceHelper.getAuthenticatedUser();
+
+        if(!user.getRole().equals(Roles.ADMIN) && !user.getId().equals(userId)) {
+            throw new AccessDeniedException("You cannot access another user's data.");
+        }
+
+        List<RosaryLog> rosaries = rosaryLogRepository.findAllByUserIdAndCompletedTrue(userId);
+        return rosaries.size();
     }
 }

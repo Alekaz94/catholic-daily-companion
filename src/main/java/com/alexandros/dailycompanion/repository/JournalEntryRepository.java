@@ -23,4 +23,6 @@ public interface JournalEntryRepository extends JpaRepository<JournalEntry, UUID
     List<JournalEntry> findAllByUserId(UUID id);
 
     List<JournalEntry> findEntriesByUserEmailAndCreatedAt(String email, LocalDate createdAt);
+
+    void deleteAllByUserId(UUID id);
 }

@@ -7,7 +7,10 @@
 package com.alexandros.dailycompanion.controller;
 
 import com.alexandros.dailycompanion.dto.*;
+import com.alexandros.dailycompanion.repository.UserRepository;
 import com.alexandros.dailycompanion.service.SaintService;
+import com.alexandros.dailycompanion.service.ServiceHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -38,6 +41,15 @@ class SaintControllerTest {
     @Mock
     private SaintService saintService;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private HttpServletRequest httpServletRequest;
+
+    @Mock
+    private ServiceHelper serviceHelper;
+
     @InjectMocks
     private SaintController saintController;
 
@@ -51,6 +63,7 @@ class SaintControllerTest {
 
         saintId = UUID.randomUUID();
         saintDto = new SaintDto(saintId, "St. Peter", 300, 350, MonthDay.of(10, 2), "Feast Day Info", "patronage", 600, "image", "source", "author", "licence");
+        when(serviceHelper.getClientIp(httpServletRequest)).thenReturn("127.0.0.1");
     }
 
     @Test
@@ -98,7 +111,7 @@ class SaintControllerTest {
                 "imageLicence"
         );
 
-        when(saintService.createSaint(any(SaintRequest.class))).thenReturn(saintDto);
+        when(saintService.createSaint(any(SaintRequest.class), "127.0.0.1")).thenReturn(saintDto);
 
         // JSON payload must match all fields
         String json = """
@@ -144,7 +157,7 @@ class SaintControllerTest {
     @Test
     void updateSaint_success() throws Exception {
         SaintUpdateRequest request = new SaintUpdateRequest("New Name", 400, 460, MonthDay.of(12, 4), "New Desc", "Patron", 1560, "image.url", "image.source", "image.author", "image.licence");
-        when(saintService.updateSaint(any(UUID.class), any(SaintUpdateRequest.class))).thenReturn(saintDto);
+        when(saintService.updateSaint(any(UUID.class), any(SaintUpdateRequest.class), "127.0.0.1")).thenReturn(saintDto);
 
         mockMvc.perform(put("/api/v1/saint/{saintId}", saintId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -156,7 +169,7 @@ class SaintControllerTest {
     @Test
     void updateSaint_notFound_shouldReturn404() throws Exception {
         UUID invalidId = UUID.randomUUID();
-        when(saintService.updateSaint(any(UUID.class), any(SaintUpdateRequest.class)))
+        when(saintService.updateSaint(any(UUID.class), any(SaintUpdateRequest.class), "127.0.0.1"))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Saint not found"));
 
         String json = """
@@ -182,7 +195,7 @@ class SaintControllerTest {
     void deleteSaint_notFound_shouldReturn404() throws Exception {
         UUID invalidId = UUID.randomUUID();
         doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Saint not found"))
-                .when(saintService).deleteSaint(invalidId);
+                .when(saintService).deleteSaint(invalidId, "127.0.0.1");
 
         mockMvc.perform(delete("/api/v1/saint/{saintId}", invalidId))
                 .andExpect(status().isNotFound());

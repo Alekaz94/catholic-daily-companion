@@ -7,6 +7,7 @@
 package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.LoginResponse;
+import com.alexandros.dailycompanion.dto.UserCreationResult;
 import com.alexandros.dailycompanion.dto.UserDto;
 import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.UserDtoMapper;
@@ -20,13 +21,15 @@ import com.google.firebase.auth.FirebaseToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
+@Transactional
 public class FirebaseAuthService {
     private final static Logger logger = LoggerFactory.getLogger(FirebaseAuthService.class);
 
@@ -35,44 +38,52 @@ public class FirebaseAuthService {
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
+    private final AuditLogService auditLogService;
 
-    public FirebaseAuthService(Environment env, UserRepository userRepository, JwtUtil jwtUtil, RefreshTokenService refreshTokenService) {
+    public FirebaseAuthService(Environment env, UserRepository userRepository, JwtUtil jwtUtil, RefreshTokenService refreshTokenService, AuditLogService auditLogService) {
         this.env = env;
         this.refreshTokenService = refreshTokenService;
+        this.auditLogService = auditLogService;
         this.firebaseAuth = FirebaseAuth.getInstance();
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
     }
 
-    public User createOrGetUser(String email, String firstName) {
+    @Transactional
+    public UserCreationResult createOrGetUser(String email, String firstName, String ipAddress) {
         String adminEmail = env.getProperty("ADMIN_EMAIL");
-        try {
-            return userRepository.findByEmail(email)
-                    .orElseGet(() -> {
-                        LocalDate now = LocalDate.now();
-                        User newUser = new User();
-                        newUser.setEmail(email);
-                        newUser.setFirstName(firstName != null ? firstName : "User");
-                        newUser.setLastName("");
-                        if(email.equalsIgnoreCase(adminEmail)) {
-                            newUser.setRole(Roles.ADMIN);
-                        } else {
-                            newUser.setRole(Roles.USER);
-                        }
-                        newUser.setCreatedAt(now);
-                        newUser.setUpdatedAt(now);
-                        return userRepository.save(newUser);
-                    });
-        } catch (DataIntegrityViolationException e) {
-            User existingUser = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new IllegalStateException("User should exist after insert."));
+        Optional<User> existingUser = userRepository.findByEmail(email);
 
-            if(existingUser.getEmail().equalsIgnoreCase(adminEmail)) {
-                existingUser.setRole(Roles.ADMIN);
-                userRepository.save(existingUser);
-            }
-            return existingUser;
+        if (existingUser.isPresent()) {
+            return new UserCreationResult(existingUser.get(), false);
         }
+
+        UUID id = UUID.randomUUID();
+        LocalDate now = LocalDate.now();
+        String role = email.equalsIgnoreCase(adminEmail) ? Roles.ADMIN.name() : Roles.USER.name();
+
+        userRepository.insertIfNotExists(
+                id,
+                email,
+                firstName != null ? firstName : "User",
+                role,
+                now,
+                now
+        );
+
+        auditLogService.logAction(
+                id,
+                "SIGNUP SUCCESS",
+                "User",
+                id,
+                "Firebase signup",
+                ipAddress
+        );
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("User should exist after insert"));
+
+        return new UserCreationResult(user, true);
     }
 
     public LoginResponse verifyFirebaseTokenAndLogin(String idToken, String ipAddress) throws FirebaseAuthException {
@@ -81,29 +92,19 @@ public class FirebaseAuthService {
         String name = decodedFirebaseToken.getName() != null ? decodedFirebaseToken.getName() : "User";
 
         logger.info("Firebase token verified | ip={}", ipAddress);
-        Optional<User> optionalUser = userRepository.findByEmail(email);
-        User user = createOrGetUser(email, name);
+        UserCreationResult result = createOrGetUser(email, name, ipAddress);
+        User user = result.user();
+        boolean isNewUser = result.isNew();
 
-       /* if(optionalUser.isPresent()) {
-            user = optionalUser.get();
-            logger.info("Firebase login existing user | userId={} | ip={}", user.getId(), ipAddress);
-        } else {
-            logger.info("Creating new Firebase user | ip={}", ipAddress);
-            user = new User();
-            user.setEmail(email);
-            user.setFirstName(decodedFirebaseToken.getName() != null ? decodedFirebaseToken.getName() : "User");
-            user.setRole(Roles.USER);
-            user.setCreatedAt(LocalDate.now());
-            user.setUpdatedAt(LocalDate.now());
-            try {
-                user = userRepository.save(user);
-                logger.info("Firebase user created | userId={} | ip={}", user.getId(), ipAddress);
-            } catch (DataIntegrityViolationException e) {
-                logger.warn("Race condition: user already created | userId={} | ip={}", user.getId(), ipAddress);
-                user = userRepository.findByEmail(email)
-                        .orElseThrow(() -> new IllegalStateException("User was just created but cant be found."));
-            }
-        }*/
+        auditLogService.logAction(
+                user.getId(),
+                "LOGIN_SUCCESS",
+                "User",
+                user.getId(),
+                "Firebase login",
+                ipAddress
+        );
+
         logger.info("Firebase login user | userId={} | ip={}", user.getId(), ipAddress);
 
         UserDto userDto = UserDtoMapper.toUserDto(user);

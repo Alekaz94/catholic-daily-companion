@@ -30,17 +30,14 @@ public class ServiceHelper {
     private final UserRepository userRepository;
     private final SaintRepository saintRepository;
     private final JournalEntryRepository journalEntryRepository;
-    private final RosaryLogRepository rosaryLogRepository;
 
     @Autowired
     public ServiceHelper(UserRepository userRepository,
                          SaintRepository saintRepository,
-                         JournalEntryRepository journalEntryRepository,
-                         RosaryLogRepository rosaryLogRepository) {
+                         JournalEntryRepository journalEntryRepository) {
         this.userRepository = userRepository;
         this.saintRepository = saintRepository;
         this.journalEntryRepository = journalEntryRepository;
-        this.rosaryLogRepository = rosaryLogRepository;
     }
 
     public User getUserByIdOrThrow(UUID id) {

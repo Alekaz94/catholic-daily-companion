@@ -10,6 +10,7 @@ import com.alexandros.dailycompanion.dto.JournalEntryDto;
 import com.alexandros.dailycompanion.dto.JournalEntryRequest;
 import com.alexandros.dailycompanion.dto.JournalEntryUpdateRequest;
 import com.alexandros.dailycompanion.enums.AuditAction;
+import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.JournalEntryDtoMapper;
 import com.alexandros.dailycompanion.model.JournalEntry;
 import com.alexandros.dailycompanion.model.User;
@@ -162,5 +163,16 @@ public class JournalEntryService {
         return entries.stream()
                 .map(JournalEntryDtoMapper::toJournalEntryDto)
                 .toList();
+    }
+
+    public int getAmountOfEntries(UUID userId) throws AccessDeniedException {
+        User user = serviceHelper.getAuthenticatedUser();
+
+        if(!user.getRole().equals(Roles.ADMIN) && !user.getId().equals(userId)) {
+            throw new AccessDeniedException("You cannot access another user's journal entries.");
+        }
+
+        List<JournalEntry> entries = journalEntryRepository.findAllByUserId(userId);
+        return entries.size();
     }
 }

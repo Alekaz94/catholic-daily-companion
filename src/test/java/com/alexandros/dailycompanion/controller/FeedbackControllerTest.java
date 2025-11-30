@@ -11,6 +11,8 @@ import com.alexandros.dailycompanion.dto.FeedbackRequest;
 import com.alexandros.dailycompanion.dto.FeedbackUpdateRequest;
 import com.alexandros.dailycompanion.exception.GlobalExceptionHandler;
 import com.alexandros.dailycompanion.service.FeedbackService;
+import com.alexandros.dailycompanion.service.ServiceHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -37,6 +39,12 @@ class FeedbackControllerTest {
     @Mock
     private FeedbackService feedbackService;
 
+    @Mock
+    private HttpServletRequest httpServletRequest;
+
+    @Mock
+    private ServiceHelper serviceHelper;
+
     @InjectMocks
     private FeedbackController feedbackController;
 
@@ -52,6 +60,7 @@ class FeedbackControllerTest {
 
         feedbackId = UUID.randomUUID();
         feedbackDto = new FeedbackDto(feedbackId, "Bug", "Something is broken", "test@email.com", LocalDateTime.now(), false);
+        when(serviceHelper.getClientIp(httpServletRequest)).thenReturn("127.0.0.1");
     }
 
     @Test

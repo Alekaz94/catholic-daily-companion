@@ -63,6 +63,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/api/v1/feedback").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                                 .requestMatchers(HttpMethod.GET, "/api/v1/feedback").hasAuthority("ROLE_ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/api/v1/feedback/*").hasAuthority("ROLE_ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/v1/admin/*").hasAuthority("ROLE_ADMIN")
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessions ->

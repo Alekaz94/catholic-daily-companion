@@ -10,6 +10,8 @@ import com.alexandros.dailycompanion.dto.FeedbackDto;
 import com.alexandros.dailycompanion.dto.FeedbackRequest;
 import com.alexandros.dailycompanion.dto.FeedbackUpdateRequest;
 import com.alexandros.dailycompanion.service.FeedbackService;
+import com.alexandros.dailycompanion.service.ServiceHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,17 +28,21 @@ import java.util.UUID;
 public class FeedbackController {
     private final static Logger logger = LoggerFactory.getLogger(FeedbackController.class);
     private final FeedbackService feedbackService;
+    private final ServiceHelper serviceHelper;
 
     @Autowired
-    public FeedbackController(FeedbackService feedbackService) {
+    public FeedbackController(FeedbackService feedbackService, ServiceHelper serviceHelper) {
         this.feedbackService = feedbackService;
+        this.serviceHelper = serviceHelper;
     }
 
     @PostMapping
     @Transactional
     public ResponseEntity<Void> submitFeedback(@RequestHeader(value = "user_id", required = false) UUID userId,
-                                            @RequestBody FeedbackRequest feedbackRequest) {
-        feedbackService.submitFeedback(userId, feedbackRequest);
+                                               @RequestBody FeedbackRequest feedbackRequest,
+                                               HttpServletRequest request) {
+        String ipAddress = serviceHelper.getClientIp(request);
+        feedbackService.submitFeedback(userId, feedbackRequest, ipAddress);
 
         logger.info("POST /feedback | Feedback submitted | userId={} | category={}", userId, feedbackRequest.category());
         return ResponseEntity.status(HttpStatus.CREATED).build();

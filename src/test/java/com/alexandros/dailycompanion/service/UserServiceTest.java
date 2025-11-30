@@ -10,6 +10,8 @@ import com.alexandros.dailycompanion.dto.*;
 import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.enums.AuditAction;
 import com.alexandros.dailycompanion.model.User;
+import com.alexandros.dailycompanion.repository.JournalEntryRepository;
+import com.alexandros.dailycompanion.repository.RosaryLogRepository;
 import com.alexandros.dailycompanion.repository.UserRepository;
 import com.alexandros.dailycompanion.security.JwtUtil;
 import com.alexandros.dailycompanion.security.PasswordUtil;
@@ -39,6 +41,12 @@ public class UserServiceTest {
 
     @Mock
     private AuthenticationManager authenticationManager;
+
+    @Mock
+    private JournalEntryRepository journalEntryRepository;
+
+    @Mock
+    private RosaryLogRepository rosaryLogRepository;
 
     @Mock
     private JwtUtil jwtUtil;

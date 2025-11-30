@@ -11,6 +11,8 @@ import com.alexandros.dailycompanion.dto.SaintRequest;
 import com.alexandros.dailycompanion.dto.SaintUpdateRequest;
 import com.alexandros.dailycompanion.dto.PageResponse;
 import com.alexandros.dailycompanion.service.SaintService;
+import com.alexandros.dailycompanion.service.ServiceHelper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,10 +33,12 @@ import java.util.UUID;
 public class SaintController {
     private final static Logger logger = LoggerFactory.getLogger(SaintController.class);
     private final SaintService saintService;
+    private final ServiceHelper serviceHelper;
 
     @Autowired
-    public SaintController(SaintService saintService) {
+    public SaintController(SaintService saintService, ServiceHelper serviceHelper) {
         this.saintService = saintService;
+        this.serviceHelper = serviceHelper;
     }
 
     @GetMapping
@@ -86,23 +90,27 @@ public class SaintController {
     }
 
     @PostMapping
-    public ResponseEntity<SaintDto> createSaint(@Valid @RequestBody SaintRequest saintRequest) {
-        SaintDto saint = saintService.createSaint(saintRequest);
+    public ResponseEntity<SaintDto> createSaint(@Valid @RequestBody SaintRequest saintRequest, HttpServletRequest request) {
+        String ipAddress = serviceHelper.getClientIp(request);
+        SaintDto saint = saintService.createSaint(saintRequest, ipAddress);
         logger.info("POST /saint | Created saint | saint={} | id={}", saint.name(), saint.id());
         return ResponseEntity.status(HttpStatus.CREATED).body(saint);
     }
 
     @PutMapping("/{saintId}")
     public ResponseEntity<SaintDto> updateSaint(@PathVariable UUID saintId,
-                                                @RequestBody SaintUpdateRequest saintUpdateRequest) {
-        SaintDto saint = saintService.updateSaint(saintId, saintUpdateRequest);
+                                                @RequestBody SaintUpdateRequest saintUpdateRequest,
+                                                HttpServletRequest request) {
+        String ipAddress = serviceHelper.getClientIp(request);
+        SaintDto saint = saintService.updateSaint(saintId, saintUpdateRequest, ipAddress);
         logger.info("PUT /saint/{} | Updated saint | saint={} | id={}", saintId, saint.name(), saint.id());
         return ResponseEntity.ok(saint);
     }
 
     @DeleteMapping("/{saintId}")
-    public ResponseEntity<Void> deleteSaint(@PathVariable UUID saintId) {
-        saintService.deleteSaint(saintId);
+    public ResponseEntity<Void> deleteSaint(@PathVariable UUID saintId, HttpServletRequest request) {
+        String ipAddress = serviceHelper.getClientIp(request);
+        saintService.deleteSaint(saintId, ipAddress);
         logger.info("DELETE /saint/{} | Deleted saint", saintId);
         return ResponseEntity.noContent().build();
     }

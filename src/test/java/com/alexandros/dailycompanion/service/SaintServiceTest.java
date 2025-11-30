@@ -9,8 +9,11 @@ package com.alexandros.dailycompanion.service;
 import com.alexandros.dailycompanion.dto.SaintDto;
 import com.alexandros.dailycompanion.dto.SaintRequest;
 import com.alexandros.dailycompanion.dto.SaintUpdateRequest;
+import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.model.Saint;
+import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.repository.SaintRepository;
+import com.alexandros.dailycompanion.security.PasswordUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 
+import java.time.LocalDate;
 import java.time.MonthDay;
 import java.util.*;
 
@@ -35,14 +39,28 @@ public class SaintServiceTest {
     @Mock
     ServiceHelper serviceHelper;
 
+    @Mock
+    AuditLogService auditLogService;
+
     @InjectMocks
     SaintService saintService;
 
     private Saint saint;
+    private User user;
     private SaintRequest saintRequest;
 
     @BeforeEach
     void setUp() {
+        user = new User();
+        user.setId(UUID.randomUUID());
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setEmail("test@example.com");
+        user.setPassword(PasswordUtil.hashPassword("password"));
+        user.setRole(Roles.USER);
+        user.setCreatedAt(LocalDate.now());
+        user.setUpdatedAt(LocalDate.now());
+
         saint = new Saint();
         saint.setId(UUID.randomUUID());
         saint.setName("St Francis");
@@ -74,8 +92,9 @@ public class SaintServiceTest {
 
     @Test
     void createSaintShouldSaveNewSaintAndReturnDto() {
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
         when(saintRepository.save(any(Saint.class))).thenAnswer(i -> i.getArgument(0));
-        SaintDto result = saintService.createSaint(saintRequest);
+        SaintDto result = saintService.createSaint(saintRequest, "127.0.0.1");
 
         assertEquals("St Francis", result.name());
         verify(saintRepository).save(any(Saint.class));
@@ -92,6 +111,8 @@ public class SaintServiceTest {
 
     @Test
     void updateSaintShouldModifyFieldsAndSave() {
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
+
         SaintUpdateRequest updateRequest = new SaintUpdateRequest(
                 "New Name",
                 500,
@@ -109,7 +130,7 @@ public class SaintServiceTest {
         when(serviceHelper.getSaintById(saint.getId())).thenReturn(saint);
         when(saintRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        SaintDto result = saintService.updateSaint(saint.getId(), updateRequest);
+        SaintDto result = saintService.updateSaint(saint.getId(), updateRequest, "127.0.0.1");
 
         assertEquals("New Name", result.name());
         assertEquals(500, result.birthYear());
@@ -128,7 +149,7 @@ public class SaintServiceTest {
 
         when(serviceHelper.getSaintById(saint.getId())).thenReturn(saint);
 
-        SaintDto result = saintService.updateSaint(saint.getId(), updateRequest);
+        SaintDto result = saintService.updateSaint(saint.getId(), updateRequest, "127.0.0.1");
 
         verify(saintRepository, never()).save(any());
         assertEquals("St Francis", result.name());
@@ -136,8 +157,10 @@ public class SaintServiceTest {
 
     @Test
     void deleteSaintShouldCallRepositoryDelete() {
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
+
         when(serviceHelper.getSaintById(saint.getId())).thenReturn(saint);
-        saintService.deleteSaint(saint.getId());
+        saintService.deleteSaint(saint.getId(), "127.0.0.1");
         verify(saintRepository).deleteById(saint.getId());
     }
 
