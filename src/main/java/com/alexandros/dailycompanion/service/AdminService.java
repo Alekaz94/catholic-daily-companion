@@ -11,6 +11,7 @@ import com.alexandros.dailycompanion.dto.AuditLogDto;
 import com.alexandros.dailycompanion.dto.FeedbackDto;
 import com.alexandros.dailycompanion.dto.UserDto;
 import com.alexandros.dailycompanion.enums.Roles;
+import com.alexandros.dailycompanion.model.Feedback;
 import com.alexandros.dailycompanion.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,14 +29,16 @@ public class AdminService {
     private final AuditLogService auditLogService;
     private final ServiceHelper serviceHelper;
     private final UserService userService;
+    private final FeedbackService feedbackService;
 
     @Autowired
-    public AdminService(JournalEntryService journalEntryService, RosaryLogService rosaryLogService, AuditLogService auditLogService, ServiceHelper serviceHelper, UserService userService) {
+    public AdminService(JournalEntryService journalEntryService, RosaryLogService rosaryLogService, AuditLogService auditLogService, ServiceHelper serviceHelper, UserService userService, FeedbackService feedbackService) {
         this.journalEntryService = journalEntryService;
         this.rosaryLogService = rosaryLogService;
         this.auditLogService = auditLogService;
         this.serviceHelper = serviceHelper;
         this.userService = userService;
+        this.feedbackService = feedbackService;
     }
 
     public AdminUserOverviewDto getUserOverview(UUID userId) throws AccessDeniedException {
@@ -49,6 +52,8 @@ public class AdminService {
 
         int journalCount = journalEntryService.getAmountOfEntries(userId);
         int rosaryCount = rosaryLogService.getAmountOfPrayedRosaries(userId);
+        int feedbackCount = feedbackService.getFeedbackCountByUserEmail(userId);
+        List<FeedbackDto> feedbacks = feedbackService.getAllFeedbackByUserEmail(userId);
         List<LocalDate> rosaryDates = rosaryLogService.getCompletedDates(userId);
         List<AuditLogDto> auditLogs = auditLogService.getAllAuditLogsForUser(userId);
 
@@ -56,6 +61,8 @@ public class AdminService {
                 userDto,
                 journalCount,
                 rosaryCount,
+                feedbackCount,
+                feedbacks,
                 rosaryDates,
                 auditLogs
         );

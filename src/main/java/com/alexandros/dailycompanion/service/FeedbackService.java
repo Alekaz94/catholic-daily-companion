@@ -39,7 +39,10 @@ public class FeedbackService {
     }
 
     public void submitFeedback(UUID userId, FeedbackRequest feedbackRequest, String ipAddress) {
+        User user = serviceHelper.getAuthenticatedUser();
+
         Feedback feedback = new Feedback();
+        feedback.setUser(user);
         feedback.setCategory(feedbackRequest.category());
         feedback.setMessage(feedbackRequest.message());
         feedback.setEmail(feedbackRequest.email());
@@ -47,7 +50,7 @@ public class FeedbackService {
         feedback.setFixed(false);
 
         if(userId != null) {
-            User user = serviceHelper.getUserByIdOrThrow(userId);
+            User currentUser = serviceHelper.getUserByIdOrThrow(userId);
             feedback.setUser(user);
         }
 
@@ -87,13 +90,26 @@ public class FeedbackService {
         return FeedbackDtoMapper.toFeedbackDto(feedback);
     }
 
-    public List<FeedbackDto> getAllFeedbackByUser(UUID userId) throws AccessDeniedException {
+    public int getFeedbackCountByUserEmail(UUID userId) throws AccessDeniedException {
         User user = serviceHelper.getAuthenticatedUser();
+        User currentUser = serviceHelper.getUserByIdOrThrow(userId);
 
         if(!user.getRole().equals(Roles.ADMIN) && !user.getId().equals(userId)) {
             throw new AccessDeniedException("You cannot access another user's data.");
         }
 
-        return FeedbackDtoMapper.toFeedbackDto(feedbackRepository.findAllByUserId(userId));
+        return feedbackRepository.findAllByUserEmail(currentUser.getEmail()).size();
+    }
+
+    public List<FeedbackDto> getAllFeedbackByUserEmail(UUID userId) throws AccessDeniedException {
+        User user = serviceHelper.getAuthenticatedUser();
+        User currentUser = serviceHelper.getUserByIdOrThrow(userId);
+
+        if(!user.getRole().equals(Roles.ADMIN) && !user.getId().equals(userId)) {
+            throw new AccessDeniedException("You cannot access another user's data.");
+        }
+
+        List<Feedback> feedbacks = feedbackRepository.findAllByUserEmail(currentUser.getEmail());
+        return FeedbackDtoMapper.toFeedbackDto(feedbacks);
     }
 }

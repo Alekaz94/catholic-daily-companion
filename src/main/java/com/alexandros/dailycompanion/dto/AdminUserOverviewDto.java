@@ -12,6 +12,8 @@ import java.util.List;
 public record AdminUserOverviewDto(UserDto user,
                                    int journalCount,
                                    int rosaryCount,
+                                   int feedbackCount,
+                                   List<FeedbackDto> feedbacks,
                                    List<LocalDate> rosaryDates,
                                    List<AuditLogDto> auditLogs) {
 }
