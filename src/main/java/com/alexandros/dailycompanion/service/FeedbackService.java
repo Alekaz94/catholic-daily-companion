@@ -41,6 +41,10 @@ public class FeedbackService {
     public void submitFeedback(UUID userId, FeedbackRequest feedbackRequest, String ipAddress) {
         User user = serviceHelper.getAuthenticatedUser();
 
+        if(userId != null) {
+            user = serviceHelper.getUserByIdOrThrow(userId);
+        }
+
         Feedback feedback = new Feedback();
         feedback.setUser(user);
         feedback.setCategory(feedbackRequest.category());
@@ -49,22 +53,16 @@ public class FeedbackService {
         feedback.setSubmittedAt(LocalDateTime.now());
         feedback.setFixed(false);
 
-        if(userId != null) {
-            User currentUser = serviceHelper.getUserByIdOrThrow(userId);
-            feedback.setUser(user);
-        }
+        feedbackRepository.save(feedback);
 
         auditLogService.logAction(
-                userId,
+                user.getId(),
                 "FEEDBACK SUBMITTED",
                 "Feedback",
                 feedback.getId(),
                 "Feedback submitted",
                 ipAddress
         );
-
-        feedbackRepository.save(feedback);
-
         logger.info("Feedback created | id={} | user={} | category={}", feedback.getId(), userId, feedbackRequest.category());
     }
 
