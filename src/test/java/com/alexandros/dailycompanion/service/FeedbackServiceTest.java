@@ -63,12 +63,16 @@ public class FeedbackServiceTest {
 
     @Test
     void submitFeedbackWithUser() {
+        when(serviceHelper.getUserByIdOrThrow(user.getId())).thenReturn(user);
+
         feedbackService.submitFeedback(user.getId(), feedbackRequest, "127.0.0.1");
         verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
 
     @Test
     void submitFeedbackWithoutUser() {
+        when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
+
         feedbackService.submitFeedback(null, feedbackRequest, "127.0.0.1");
         verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
@@ -80,7 +84,7 @@ public class FeedbackServiceTest {
         List<FeedbackDto> result = feedbackService.getAllFeedback();
 
         assertEquals(1, result.size());
-        assertEquals("Bug", result.getFirst().category());
+        assertEquals("Bug", result.get(0).category());
     }
 
     @Test

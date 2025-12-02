@@ -174,7 +174,7 @@ public class SaintServiceTest {
         Page<SaintDto> result = saintService.getAllSaints(null, 0, 10);
 
         assertEquals(1, result.getTotalElements());
-        assertEquals("St Francis", result.getContent().getFirst().name());
+        assertEquals("St Francis", result.getContent().get(0).name());
     }
 
     @Test

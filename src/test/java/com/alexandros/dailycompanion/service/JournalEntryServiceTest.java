@@ -96,7 +96,7 @@ public class JournalEntryServiceTest {
 
         Page<JournalEntryDto> result = journalEntryService.getAllJournalEntriesForUser(0, 5, "desc");
         assertEquals(1, result.getTotalElements());
-        assertEquals(entry.getTitle(), result.getContent().getFirst().title());
+        assertEquals(entry.getTitle(), result.getContent().get(0).title());
     }
 
     @Test
@@ -106,7 +106,7 @@ public class JournalEntryServiceTest {
 
         List<JournalEntryDto> result = journalEntryService.getAllJournalEntriesForUserNotPaged(user.getId());
         assertEquals(1, result.size());
-        assertEquals(entry.getTitle(), result.getFirst().title());
+        assertEquals(entry.getTitle(), result.get(0).title());
     }
 
     @Test
@@ -168,7 +168,7 @@ public class JournalEntryServiceTest {
 
         List<LocalDate> dates = journalEntryService.getEntryDates();
         assertEquals(1, dates.size());
-        assertEquals(entry.getCreatedAt(), dates.getFirst());
+        assertEquals(entry.getCreatedAt(), dates.get(0));
     }
 
     @Test
@@ -180,7 +180,7 @@ public class JournalEntryServiceTest {
 
         List<JournalEntryDto> result = journalEntryService.getEntriesByDate(date);
         assertEquals(1, result.size());
-        assertEquals(entry.getTitle(), result.getFirst().title());
+        assertEquals(entry.getTitle(), result.get(0).title());
     }
 
     @Test

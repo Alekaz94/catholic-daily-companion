@@ -123,7 +123,7 @@ public class RosaryLogServiceTest {
         List<RosaryLogDto> result = rosaryLogService.getHistory(user.getId());
 
         assertEquals(1, result.size());
-        assertEquals(today, result.getFirst().date());
+        assertEquals(today, result.get(0).date());
     }
 
     @Test

@@ -29,6 +29,7 @@ import java.time.MonthDay;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -40,9 +41,6 @@ class SaintControllerTest {
 
     @Mock
     private SaintService saintService;
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private HttpServletRequest httpServletRequest;
@@ -68,12 +66,16 @@ class SaintControllerTest {
 
     @Test
     void getAllSaints_success() throws Exception {
+        when(serviceHelper.getClientIp(any())).thenReturn("127.0.0.1");
+
         Page<SaintDto> page = new PageImpl<>(List.of(saintDto), PageRequest.of(0, 5), 1);
         when(saintService.getAllSaints("", 0, 5)).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/saint"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].id").value(saintId.toString()));
+                .andExpect(jsonPath("$.content[0].id").value(saintId.toString()))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
     }
 
     @Test
@@ -111,7 +113,9 @@ class SaintControllerTest {
                 "imageLicence"
         );
 
-        when(saintService.createSaint(any(SaintRequest.class), "127.0.0.1")).thenReturn(saintDto);
+        when(serviceHelper.getClientIp(any(HttpServletRequest.class))).thenReturn("127.0.0.1");
+
+        when(saintService.createSaint(any(SaintRequest.class), eq("127.0.0.1"))).thenReturn(saintDto);
 
         // JSON payload must match all fields
         String json = """
@@ -157,7 +161,8 @@ class SaintControllerTest {
     @Test
     void updateSaint_success() throws Exception {
         SaintUpdateRequest request = new SaintUpdateRequest("New Name", 400, 460, MonthDay.of(12, 4), "New Desc", "Patron", 1560, "image.url", "image.source", "image.author", "image.licence");
-        when(saintService.updateSaint(any(UUID.class), any(SaintUpdateRequest.class), "127.0.0.1")).thenReturn(saintDto);
+        when(serviceHelper.getClientIp(any(HttpServletRequest.class))).thenReturn("127.0.0.1");
+        when(saintService.updateSaint(any(UUID.class), any(SaintUpdateRequest.class), eq("127.0.0.1"))).thenReturn(saintDto);
 
         mockMvc.perform(put("/api/v1/saint/{saintId}", saintId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -169,7 +174,9 @@ class SaintControllerTest {
     @Test
     void updateSaint_notFound_shouldReturn404() throws Exception {
         UUID invalidId = UUID.randomUUID();
-        when(saintService.updateSaint(any(UUID.class), any(SaintUpdateRequest.class), "127.0.0.1"))
+        when(serviceHelper.getClientIp(any(HttpServletRequest.class))).thenReturn("127.0.0.1");
+
+        when(saintService.updateSaint(any(UUID.class), any(SaintUpdateRequest.class), eq("127.0.0.1")))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Saint not found"));
 
         String json = """
@@ -194,8 +201,10 @@ class SaintControllerTest {
     @Test
     void deleteSaint_notFound_shouldReturn404() throws Exception {
         UUID invalidId = UUID.randomUUID();
+        when(serviceHelper.getClientIp(any(HttpServletRequest.class))).thenReturn("127.0.0.1");
+
         doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Saint not found"))
-                .when(saintService).deleteSaint(invalidId, "127.0.0.1");
+                .when(saintService).deleteSaint(eq(invalidId), eq("127.0.0.1"));
 
         mockMvc.perform(delete("/api/v1/saint/{saintId}", invalidId))
                 .andExpect(status().isNotFound());
