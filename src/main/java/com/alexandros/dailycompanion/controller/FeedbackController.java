@@ -9,6 +9,7 @@ package com.alexandros.dailycompanion.controller;
 import com.alexandros.dailycompanion.dto.FeedbackDto;
 import com.alexandros.dailycompanion.dto.FeedbackRequest;
 import com.alexandros.dailycompanion.dto.FeedbackUpdateRequest;
+import com.alexandros.dailycompanion.dto.PageResponse;
 import com.alexandros.dailycompanion.service.FeedbackService;
 import com.alexandros.dailycompanion.service.ServiceHelper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +17,7 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -49,9 +51,20 @@ public class FeedbackController {
     }
 
     @GetMapping
-    public ResponseEntity<List<FeedbackDto>> getAllFeedback() {
-        List<FeedbackDto> feedbacks = feedbackService.getAllFeedback();
-        return ResponseEntity.ok(feedbacks);
+    public ResponseEntity<PageResponse<FeedbackDto>> getAllFeedback(@RequestParam(defaultValue = "0") int page,
+                                                                    @RequestParam(defaultValue = "10") int size,
+                                                                    @RequestParam(defaultValue = "desc") String sort) {
+        Page<FeedbackDto> feedback = feedbackService.getAllFeedback(page, size, sort);
+
+        PageResponse<FeedbackDto> response = new PageResponse<>(
+                feedback.getContent(),
+                feedback.getNumber(),
+                feedback.getSize(),
+                feedback.getTotalElements(),
+                feedback.getTotalPages(),
+                feedback.isLast()
+        );
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

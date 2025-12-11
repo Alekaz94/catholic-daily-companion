@@ -6,6 +6,7 @@
 
 package com.alexandros.dailycompanion.repository;
 
+import com.alexandros.dailycompanion.dto.AdminUserListDto;
 import com.alexandros.dailycompanion.model.User;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
@@ -46,4 +47,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                            @Param("role") String role,
                            @Param("createdAt") LocalDate createdAt,
                            @Param("updatedAt") LocalDate updatedAt);
+
+    @Query(value = "SELECT new com.alexandros.dailycompanion.dto.AdminUserListDto(u.id, u.email, u.role) FROM User u")
+    Page<AdminUserListDto> findAllUsersForAdmin(Pageable pageable);
+
+    @Query("SELECT new com.alexandros.dailycompanion.dto.AdminUserListDto(u.id, u.email, u.role) " +
+            "FROM User u WHERE LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))")
+    Page<AdminUserListDto> searchUsersForAdmin(@Param("email") String email, Pageable pageable);
 }

@@ -6,10 +6,8 @@
 
 package com.alexandros.dailycompanion.controller;
 
-import com.alexandros.dailycompanion.dto.SaintDto;
-import com.alexandros.dailycompanion.dto.SaintRequest;
-import com.alexandros.dailycompanion.dto.SaintUpdateRequest;
-import com.alexandros.dailycompanion.dto.PageResponse;
+import com.alexandros.dailycompanion.dto.*;
+import com.alexandros.dailycompanion.model.Saint;
 import com.alexandros.dailycompanion.service.SaintService;
 import com.alexandros.dailycompanion.service.ServiceHelper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,12 +40,12 @@ public class SaintController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<SaintDto>> getAllSaints(@RequestParam(required = false, defaultValue = "") String query,
-                                                               @RequestParam(defaultValue = "0") int page,
-                                                               @RequestParam(defaultValue = "5") int size) {
-        Page<SaintDto> saintPage = saintService.getAllSaints(query, page, size);
+    public ResponseEntity<PageResponse<SaintListDto>> getAllSaints(@RequestParam(required = false, defaultValue = "") String query,
+                                                                   @RequestParam(defaultValue = "0") int page,
+                                                                   @RequestParam(defaultValue = "5") int size) {
+        Page<SaintListDto> saintPage = saintService.getAllSaintsList(query, page, size);
 
-        PageResponse<SaintDto> response = new PageResponse<>(
+        PageResponse<SaintListDto> response = new PageResponse<>(
                 saintPage.getContent(),
                 saintPage.getNumber(),
                 saintPage.getSize(),
@@ -66,9 +64,15 @@ public class SaintController {
     }
 
     @GetMapping("/today")
-    public ResponseEntity<List<SaintDto>> getTodaysSaint() {
-        List<SaintDto> saint = saintService.getAllSaintsByFeastDay();
+    public ResponseEntity<List<SaintListDto>> getTodaysSaint() {
+        List<SaintListDto> saint = saintService.getTodaysSaintList();
         return ResponseEntity.ok(saint);
+    }
+
+    @GetMapping("/today/public")
+    public ResponseEntity<List<SaintDto>> getTodayPublic() {
+        List<SaintDto> saints = saintService.getAllSaintsByFeastDay(); // full info
+        return ResponseEntity.ok(saints);
     }
 
     @GetMapping("/feast/{feastCode}")

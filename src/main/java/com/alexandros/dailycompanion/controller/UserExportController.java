@@ -6,9 +6,9 @@
 
 package com.alexandros.dailycompanion.controller;
 
-import com.alexandros.dailycompanion.dto.JournalEntryDto;
-import com.alexandros.dailycompanion.dto.RosaryLogDto;
-import com.alexandros.dailycompanion.dto.UserDto;
+import com.alexandros.dailycompanion.dto.*;
+import com.alexandros.dailycompanion.model.AuditLog;
+import com.alexandros.dailycompanion.service.AuditLogService;
 import com.alexandros.dailycompanion.service.JournalEntryService;
 import com.alexandros.dailycompanion.service.RosaryLogService;
 import com.alexandros.dailycompanion.service.UserService;
@@ -42,13 +42,15 @@ public class UserExportController {
     private final UserService userService;
     private final RosaryLogService rosaryLogService;
     private final JournalEntryService journalEntryService;
+    private final AuditLogService auditLogService;
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public UserExportController(UserService userService, RosaryLogService rosaryLogService, JournalEntryService journalEntryService, ObjectMapper objectMapper) {
+    public UserExportController(UserService userService, RosaryLogService rosaryLogService, JournalEntryService journalEntryService, AuditLogService auditLogService, ObjectMapper objectMapper) {
         this.userService = userService;
         this.rosaryLogService = rosaryLogService;
         this.journalEntryService = journalEntryService;
+        this.auditLogService = auditLogService;
         this.objectMapper = objectMapper;
     }
 
@@ -66,6 +68,7 @@ public class UserExportController {
                 "exportedAt", Instant.now(),
                 "formatVersion", 1
         ));
+        exportData.put("auditLogs", auditLogService.getAllAuditLogsForExportForUser(currentUser.id()));
 
         String json = objectMapper
                 .writerWithDefaultPrettyPrinter()
@@ -86,6 +89,7 @@ public class UserExportController {
         UserDto user = userService.getUser(userId);
         List<RosaryLogDto> rosaryLogs = rosaryLogService.getHistory(userId);
         List<JournalEntryDto> journalEntries = journalEntryService.getAllJournalEntriesForUserNotPaged(userId);
+        List<AuditLogExportDto> auditLogs = auditLogService.getAllAuditLogsForExportForUser(userId);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try(ZipOutputStream zipOutputStream = new ZipOutputStream(baos)) {
@@ -102,6 +106,11 @@ public class UserExportController {
             zipOutputStream.putNextEntry(new ZipEntry("journal.csv"));
             String journalCsv = convertJournalToCsv(journalEntries);
             zipOutputStream.write(journalCsv.getBytes(StandardCharsets.UTF_8));
+            zipOutputStream.closeEntry();
+
+            zipOutputStream.putNextEntry(new ZipEntry("audit.csv"));
+            String auditCsv = convertAuditLogsToCsv(auditLogs);
+            zipOutputStream.write(auditCsv.getBytes(StandardCharsets.UTF_8));
             zipOutputStream.closeEntry();
 
             zipOutputStream.putNextEntry(new ZipEntry("metadata.json"));
@@ -138,6 +147,23 @@ public class UserExportController {
                     .append(entry.updatedAt()).append(",")
                     .append(escapeCsv(entry.title())).append(",")
                     .append(escapeCsv(entry.content())).append("\n");
+        }
+        return sb.toString();
+    }
+
+    private String convertAuditLogsToCsv(List<AuditLogExportDto> logs) {
+        StringBuilder sb = new StringBuilder("id,userId,action,entityType,entityId,metadata,ipAddress,createdAt\n");
+
+        for (AuditLogExportDto log : logs) {
+            sb.append(log.id()).append(",")
+                    .append(log.userId() != null ? log.userId() : "").append(",")
+                    .append(escapeCsv(log.action())).append(",")
+                    .append(escapeCsv(log.entityType())).append(",")
+                    .append(log.entityId() != null ? log.entityId() : "").append(",")
+                    .append(escapeCsv(log.metadata())).append(",")
+                    .append(escapeCsv(log.ipAddress())).append(",")
+                    .append(log.createdAt())
+                    .append("\n");
         }
         return sb.toString();
     }

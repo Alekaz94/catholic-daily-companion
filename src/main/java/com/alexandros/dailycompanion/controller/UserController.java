@@ -59,6 +59,13 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/dashboard")
+    public ResponseEntity<UserDashboardDto> getDashboard() {
+        UserDashboardDto dashboard = userService.getDashboardForCurrentUser();
+
+        return ResponseEntity.ok(dashboard);
+    }
+
     @GetMapping("/{userId}")
     public ResponseEntity<UserDto> getUser(@PathVariable UUID userId) throws AccessDeniedException {
         UserDto user = userService.getUser(userId);

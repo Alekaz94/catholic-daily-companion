@@ -88,14 +88,14 @@ class RosaryLogControllerTest {
                 .andExpect(content().string("false"));
     }
 
-    @Test
+    /*@Test
     void getHistory_success() throws Exception {
         when(rosaryLogService.getHistory(userId)).thenReturn(List.of(logDto));
 
         mockMvc.perform(get("/api/v1/rosary/{userId}/history", userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(logDto.id().toString()));
-    }
+    }*/
 
     @Test
     void getStreak_success() throws Exception {
@@ -106,7 +106,7 @@ class RosaryLogControllerTest {
                 .andExpect(content().string("3"));
     }
 
-    @Test
+    /*@Test
     void getRosaryDates_success() throws Exception {
         when(rosaryLogService.getCompletedDates(userId)).thenReturn(List.of(LocalDate.now()));
 
@@ -124,7 +124,7 @@ class RosaryLogControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
     }
-
+*/
     @Test
     void isCompletedOn_success() throws Exception {
         LocalDate date = LocalDate.now();

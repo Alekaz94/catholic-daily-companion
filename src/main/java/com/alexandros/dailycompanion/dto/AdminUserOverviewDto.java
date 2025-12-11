@@ -6,14 +6,8 @@
 
 package com.alexandros.dailycompanion.dto;
 
-import java.time.LocalDate;
-import java.util.List;
+import org.springframework.data.domain.Page;
 
 public record AdminUserOverviewDto(UserDto user,
-                                   int journalCount,
-                                   int rosaryCount,
                                    int feedbackCount,
-                                   List<FeedbackDto> feedbacks,
-                                   List<LocalDate> rosaryDates,
-                                   List<AuditLogDto> auditLogs) {
-}
+                                   Page<FeedbackDto> feedbacks){}

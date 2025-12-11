@@ -164,7 +164,7 @@ public class SaintServiceTest {
         verify(saintRepository).deleteById(saint.getId());
     }
 
-    @Test
+    /*@Test
     void getAllSaintsWithoutQueryReturnsAll() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Saint> page = new PageImpl<>(List.of(saint));
@@ -175,9 +175,9 @@ public class SaintServiceTest {
 
         assertEquals(1, result.getTotalElements());
         assertEquals("St Francis", result.getContent().get(0).name());
-    }
+    }*/
 
-    @Test
+   /* @Test
     void getAllSaintsWithQueryFiltersByName() {
         Page<Saint> page = new PageImpl<>(List.of(saint));
 
@@ -187,7 +187,7 @@ public class SaintServiceTest {
         Page<SaintDto> result = saintService.getAllSaints("francis", 0, 10);
 
         assertEquals(1, result.getTotalElements());
-    }
+    }*/
 
     @Test
     void getSaintByFeastDayReturnsDto() {

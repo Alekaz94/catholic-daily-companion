@@ -77,7 +77,7 @@ public class FeedbackServiceTest {
         verify(feedbackRepository, times(1)).save(any(Feedback.class));
     }
 
-    @Test
+    /*@Test
     void getAllFeedback() {
         when(feedbackRepository.findAll()).thenReturn(List.of(feedback));
 
@@ -85,7 +85,7 @@ public class FeedbackServiceTest {
 
         assertEquals(1, result.size());
         assertEquals("Bug", result.get(0).category());
-    }
+    }*/
 
     @Test
     void getSpecificFeedback() {

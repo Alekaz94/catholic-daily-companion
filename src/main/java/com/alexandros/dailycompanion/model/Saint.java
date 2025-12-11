@@ -6,21 +6,21 @@
 
 package com.alexandros.dailycompanion.model;
 
+import com.alexandros.dailycompanion.converter.MonthDayConverter;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.MonthDay;
 import java.util.UUID;
 
-@Data
+@Entity
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "saints")
-@Entity
 public class Saint {
     @Id
     @GeneratedValue
@@ -30,6 +30,7 @@ public class Saint {
     private String name;
     private Integer birthYear;
     private Integer deathYear;
+    @Convert(converter = MonthDayConverter.class)
     private MonthDay feastDay;
     @Column(columnDefinition = "TEXT")
     private String biography;

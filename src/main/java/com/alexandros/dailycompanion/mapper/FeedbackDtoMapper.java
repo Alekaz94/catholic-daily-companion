@@ -7,7 +7,10 @@
 package com.alexandros.dailycompanion.mapper;
 
 import com.alexandros.dailycompanion.dto.FeedbackDto;
+import com.alexandros.dailycompanion.dto.JournalEntryDto;
 import com.alexandros.dailycompanion.model.Feedback;
+import com.alexandros.dailycompanion.model.JournalEntry;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -30,5 +33,9 @@ public class FeedbackDtoMapper {
 
     public static List<FeedbackDto> toFeedbackDto (List<Feedback> feedbacks) {
         return feedbacks.stream().map(FeedbackDtoMapper::toFeedbackDto).toList();
+    }
+
+    public static Page<FeedbackDto> toFeedbackDto(Page<Feedback> entries) {
+        return entries.map(FeedbackDtoMapper::toFeedbackDto);
     }
 }

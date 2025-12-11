@@ -6,10 +6,14 @@
 
 package com.alexandros.dailycompanion.repository;
 
+import com.alexandros.dailycompanion.dto.SaintDto;
+import com.alexandros.dailycompanion.dto.SaintListDto;
 import com.alexandros.dailycompanion.model.Saint;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.MonthDay;
@@ -25,7 +29,19 @@ public interface SaintRepository extends JpaRepository<Saint, UUID> {
 
     Optional<Saint> findByPatronage(String patronage);
 
-    Page<Saint> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    Page<SaintListDto> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
     List<Saint> findAllByFeastDay(MonthDay monthDay);
+
+    @Query("""
+            SELECT new com.alexandros.dailycompanion.dto.SaintListDto(
+                s.id,
+                s.name,
+                s.feastDay,
+                s.imageUrl
+            )
+            FROM Saint s
+            WHERE LOWER(s.name) LIKE LOWER(CONCAT('%',:query,'%'))
+    """)
+    Page<SaintListDto> findAllList(@Param("query") String query, Pageable pageable);
 }

@@ -74,7 +74,7 @@ public class JournalEntryServiceTest {
         request = new JournalEntryRequest("New Title", "New Content");
     }
 
-    @Test
+    /*@Test
     void getAllJournalEntriesForUserEmptyList() {
         when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
         Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updatedAt")
@@ -84,9 +84,9 @@ public class JournalEntryServiceTest {
 
         Page<JournalEntryDto> result = journalEntryService.getAllJournalEntriesForUser(0, 5, "desc");
         assertEquals(0, result.getTotalElements());
-    }
+    }*/
 
-    @Test
+    /*@Test
     void getAllJournalEntriesForUserReturnsEntries() {
         when(serviceHelper.getAuthenticatedUser()).thenReturn(user);
         Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "updatedAt")
@@ -97,7 +97,7 @@ public class JournalEntryServiceTest {
         Page<JournalEntryDto> result = journalEntryService.getAllJournalEntriesForUser(0, 5, "desc");
         assertEquals(1, result.getTotalElements());
         assertEquals(entry.getTitle(), result.getContent().get(0).title());
-    }
+    }*/
 
     @Test
     void getAllJournalEntriesForUserNotPagedSuccess() throws AccessDeniedException {

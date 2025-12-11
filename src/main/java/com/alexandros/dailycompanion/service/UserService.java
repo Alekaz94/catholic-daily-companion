@@ -9,9 +9,11 @@ package com.alexandros.dailycompanion.service;
 import com.alexandros.dailycompanion.dto.*;
 import com.alexandros.dailycompanion.enums.AuditAction;
 import com.alexandros.dailycompanion.enums.Roles;
+import com.alexandros.dailycompanion.mapper.FeedbackDtoMapper;
 import com.alexandros.dailycompanion.mapper.UserDtoMapper;
 import com.alexandros.dailycompanion.model.RefreshToken;
 import com.alexandros.dailycompanion.model.User;
+import com.alexandros.dailycompanion.repository.FeedbackRepository;
 import com.alexandros.dailycompanion.repository.JournalEntryRepository;
 import com.alexandros.dailycompanion.repository.RosaryLogRepository;
 import com.alexandros.dailycompanion.repository.UserRepository;
@@ -55,9 +57,11 @@ public class UserService implements UserDetailsService {
     private final RefreshTokenService refreshTokenService;
     private final JournalEntryRepository journalEntryRepository;
     private final RosaryLogRepository rosaryLogRepository;
+    private final FeedbackRepository feedbackRepository;
+    private final RosaryLogService rosaryLogService;
 
     @Autowired
-    public UserService(AuditLogService auditLogService, @Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil, ServiceHelper serviceHelper, RefreshTokenService refreshTokenService, JournalEntryRepository journalEntryRepository, RosaryLogRepository rosaryLogRepository) {
+    public UserService(AuditLogService auditLogService, @Lazy AuthenticationManager authenticationManager, UserRepository userRepository, JwtUtil jwtUtil, ServiceHelper serviceHelper, RefreshTokenService refreshTokenService, JournalEntryRepository journalEntryRepository, RosaryLogRepository rosaryLogRepository, FeedbackRepository feedbackRepository, RosaryLogService rosaryLogService) {
         this.auditLogService = auditLogService;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -66,6 +70,8 @@ public class UserService implements UserDetailsService {
         this.refreshTokenService = refreshTokenService;
         this.journalEntryRepository = journalEntryRepository;
         this.rosaryLogRepository = rosaryLogRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.rosaryLogService = rosaryLogService;
     }
 
     public Page<UserDto> getAllUsers(String query, int page, int size, String sortBy, String sortDir) {
@@ -119,6 +125,31 @@ public class UserService implements UserDetailsService {
         logger.info("Created user account '{}'", user.getId());
 
         return UserDtoMapper.toUserDto(user);
+    }
+
+    public UserDashboardDto getDashboardForCurrentUser() {
+        User user = serviceHelper.getAuthenticatedUser();
+
+        int journalCount = journalEntryRepository.countByUserId(user.getId());
+        int rosaryCount = rosaryLogRepository.countCompletedByUserId(user.getId());
+        int feedbackCount = feedbackRepository.countByUserEmail(user.getEmail());
+
+        Pageable pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "submittedAt"));
+        Page<FeedbackDto> recentFeedbacks = feedbackRepository
+                .findAllByUserEmail(user.getEmail(), pageable)
+                .map(FeedbackDtoMapper::toFeedbackDto);
+
+        int currentStreak = rosaryLogService.getStreak(user.getId());
+        int highestStreak = rosaryLogService.calculateHighestStreak(user.getId());
+
+        return new UserDashboardDto(
+                journalCount,
+                rosaryCount,
+                feedbackCount,
+                recentFeedbacks,
+                currentStreak,
+                highestStreak
+        );
     }
 
     public UserDto updateUserPassword(UUID userId,

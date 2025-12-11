@@ -6,10 +6,7 @@
 
 package com.alexandros.dailycompanion.controller;
 
-import com.alexandros.dailycompanion.dto.JournalEntryDto;
-import com.alexandros.dailycompanion.dto.JournalEntryRequest;
-import com.alexandros.dailycompanion.dto.JournalEntryUpdateRequest;
-import com.alexandros.dailycompanion.dto.PageResponse;
+import com.alexandros.dailycompanion.dto.*;
 import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.service.JournalEntryService;
 import com.alexandros.dailycompanion.service.ServiceHelper;
@@ -45,12 +42,12 @@ public class JournalEntryController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<JournalEntryDto>> getAllJournalEntries(@RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<PageResponse<JournalEntryLiteDto>> getAllJournalEntries(@RequestParam(defaultValue = "0") int page,
                                                                               @RequestParam(defaultValue = "5") int size,
                                                                               @RequestParam(defaultValue = "desc") String sort) {
-        Page<JournalEntryDto> entries = journalEntryService.getAllJournalEntriesForUser(page, size, sort);
+        Page<JournalEntryLiteDto> entries = journalEntryService.getAllJournalEntriesForUser(page, size, sort);
 
-        PageResponse<JournalEntryDto> response = new PageResponse<>(
+        PageResponse<JournalEntryLiteDto> response = new PageResponse<>(
                 entries.getContent(),
                 entries.getNumber(),
                 entries.getSize(),

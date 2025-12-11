@@ -71,19 +71,22 @@ public class FirebaseAuthService {
                 now
         );
 
-        auditLogService.logAction(
-                id,
-                "SIGNUP SUCCESS",
-                "User",
-                id,
-                "Firebase signup",
-                ipAddress
-        );
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User should exist after insert"));
+        boolean isNew = user.getId().equals(id);
 
-        return new UserCreationResult(user, true);
+        if(isNew) {
+            auditLogService.logAction(
+                    id,
+                    "SIGNUP SUCCESS",
+                    "User",
+                    id,
+                    "Firebase signup",
+                    ipAddress
+            );
+        }
+
+        return new UserCreationResult(user, isNew);
     }
 
     public LoginResponse verifyFirebaseTokenAndLogin(String idToken, String ipAddress) throws FirebaseAuthException {

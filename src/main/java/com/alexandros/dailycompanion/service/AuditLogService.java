@@ -7,8 +7,10 @@
 package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.AuditLogDto;
+import com.alexandros.dailycompanion.dto.AuditLogExportDto;
 import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.mapper.AuditLogDtoMapper;
+import com.alexandros.dailycompanion.mapper.AuditLogExportDtoMapper;
 import com.alexandros.dailycompanion.model.AuditLog;
 import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.repository.AuditLogRepository;
@@ -56,5 +58,15 @@ public class AuditLogService {
         }
 
         return AuditLogDtoMapper.toAuditLogDto(auditLogRepository.findAllByUserId(userId));
+    }
+
+    public List<AuditLogExportDto> getAllAuditLogsForExportForUser(UUID userId) throws AccessDeniedException {
+        User user = serviceHelper.getAuthenticatedUser();
+
+        if(!user.getRole().equals(Roles.ADMIN) && !user.getId().equals(userId)) {
+            throw new AccessDeniedException("You cannot access another user's data.");
+        }
+
+        return AuditLogExportDtoMapper.toAuditLogExportDto(auditLogRepository.findAllByUserId(userId));
     }
 }

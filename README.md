@@ -21,14 +21,14 @@ Provides user authentication, rosary streak tracking, daily readings, profile ed
 
 ## 🛠 Tech Stack
 
-| Category       | Technology                     |
-|----------------|--------------------------------|
-| Language       | Java 21                        |
-| Framework      | Spring Boot 3.5.x              |
-| Security       | Spring Security 6, JWT (jjwt)  |
-| Database       | PostgreSQL                     |
-| Authentication | Firebase Admin SDK             |
-| Build Tool     | Maven                          |
+| Category       | Technology                    |
+|----------------|-------------------------------|
+| Language       | Java 17                       |
+| Framework      | Spring Boot 3.5.x             |
+| Security       | Spring Security 6, JWT (jjwt) |
+| Database       | PostgreSQL                    |
+| Authentication | Firebase Admin SDK            |
+| Build Tool     | Maven                         |
 
 ---
 

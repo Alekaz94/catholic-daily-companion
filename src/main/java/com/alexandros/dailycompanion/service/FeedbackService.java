@@ -17,6 +17,10 @@ import com.alexandros.dailycompanion.repository.FeedbackRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
@@ -66,9 +70,12 @@ public class FeedbackService {
         logger.info("Feedback created | id={} | user={} | category={}", feedback.getId(), userId, feedbackRequest.category());
     }
 
-    public List<FeedbackDto> getAllFeedback() {
-        List<Feedback> feedbacks = feedbackRepository.findAll();
-        return FeedbackDtoMapper.toFeedbackDto(feedbacks);
+    public Page<FeedbackDto> getAllFeedback(int page, int size, String sort) {
+        Sort.Direction direction = Sort.Direction.fromOptionalString(sort).orElse(Sort.Direction.DESC);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "submittedAt"));
+
+        Page<Feedback> feedbackPage = feedbackRepository.findAll(pageable);
+        return feedbackPage.map(FeedbackDtoMapper::toFeedbackDto);
     }
 
     public FeedbackDto getSpecificFeedback(UUID id) {
@@ -96,18 +103,21 @@ public class FeedbackService {
             throw new AccessDeniedException("You cannot access another user's data.");
         }
 
-        return feedbackRepository.findAllByUserEmail(currentUser.getEmail()).size();
+        return feedbackRepository.countByUserEmail(currentUser.getEmail());
     }
 
-    public List<FeedbackDto> getAllFeedbackByUserEmail(UUID userId) throws AccessDeniedException {
+    public Page<FeedbackDto> getAllFeedbackByUserEmail(UUID userId, int page, int size, String sort) throws AccessDeniedException {
         User user = serviceHelper.getAuthenticatedUser();
-        User currentUser = serviceHelper.getUserByIdOrThrow(userId);
+        User targetUser = serviceHelper.getUserByIdOrThrow(userId);
 
         if(!user.getRole().equals(Roles.ADMIN) && !user.getId().equals(userId)) {
             throw new AccessDeniedException("You cannot access another user's data.");
         }
 
-        List<Feedback> feedbacks = feedbackRepository.findAllByUserEmail(currentUser.getEmail());
-        return FeedbackDtoMapper.toFeedbackDto(feedbacks);
+        Sort.Direction direction = Sort.Direction.fromOptionalString(sort).orElse(Sort.Direction.DESC);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "submittedAt"));
+
+        Page<Feedback> feedbacks = feedbackRepository.findAllByUserEmail(targetUser.getEmail(), pageable);
+        return feedbacks.map(FeedbackDtoMapper::toFeedbackDto);
     }
 }

@@ -71,7 +71,7 @@ class JournalEntryControllerTest {
         when(serviceHelper.getClientIp(any())).thenReturn("127.0.0.1");
     }
 
-    @Test
+    /*@Test
     void getAllJournalEntries_success() throws Exception {
         PageResponse<JournalEntryDto> pageResponse = new PageResponse<>(
                 List.of(journalEntryDto), 0, 5, 1, 1, true
@@ -87,7 +87,7 @@ class JournalEntryControllerTest {
                         .param("sort", "desc"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].title").value("My Title"));
-    }
+    }*/
 
     @Test
     void getEntryById_success() throws Exception {

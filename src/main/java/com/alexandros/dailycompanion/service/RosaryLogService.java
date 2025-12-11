@@ -16,6 +16,10 @@ import com.alexandros.dailycompanion.repository.RosaryLogRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
@@ -72,20 +76,36 @@ public class RosaryLogService {
                 .orElse(false);
     }
 
+    public Page<RosaryLogDto> getHistory(UUID userId, int page, int size, String sort) {
+        Sort.Direction direction = Sort.Direction.fromOptionalString(sort)
+                .orElse(Sort.Direction.DESC);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "date"));
+
+        Page<RosaryLog> logs = rosaryLogRepository.findAllByUserIdAndCompletedTrue(userId, pageable);
+
+        return logs.map(RosaryLogDtoMapper::toRosaryDto);
+    }
+
     public List<RosaryLogDto> getHistory(UUID userId) {
         List<RosaryLog> logs = rosaryLogRepository.findAllByUserIdOrderByDateDesc(userId);
         return RosaryLogDtoMapper.toRosaryLogDto(logs);
     }
 
     public int getStreak(UUID userId) {
-        List<RosaryLog> logs = rosaryLogRepository.findAllByUserIdAndCompletedTrueOrderByDateDesc(userId);
+        List<RosaryLog> logs = rosaryLogRepository.findCompletedLogsDesc(userId);
+
+        if (logs.isEmpty()) {
+            return 0;
+        }
+
         int streak = 0;
-        LocalDate expectedDate = ZonedDateTime.now(ZoneOffset.UTC).toLocalDate();
+        LocalDate expected = LocalDate.now();
 
         for(RosaryLog log : logs) {
-            if(log.getDate().isEqual(expectedDate)) {
+            if(log.getDate().isEqual(expected)) {
                 streak++;
-                expectedDate = expectedDate.minusDays(1);
+                expected = expected.minusDays(1);
             } else {
                 break;
             }
@@ -94,8 +114,31 @@ public class RosaryLogService {
         return streak;
     }
 
+    public int calculateHighestStreak(UUID userId) {
+        List<RosaryLog> logs = rosaryLogRepository.findCompletedLogsDesc(userId);
+
+        if (logs.isEmpty()) {
+            return 0;
+        }
+        int highest = 1;
+        int current = 1;
+
+        for(int i = 1; i < logs.size(); i++) {
+            LocalDate prev = logs.get(i - 1).getDate();
+            LocalDate now = logs.get(i).getDate();
+
+            if (prev.minusDays(1).equals(now)) {
+                current++;
+            } else {
+                highest = Math.max(highest, current);
+                current = 1;
+            }
+        }
+        return Math.max(highest, current);
+    }
+
     public List<LocalDate> getCompletedDates(UUID userId) {
-        return rosaryLogRepository.findAllByUserIdAndCompletedTrue(userId)
+        return rosaryLogRepository.findAllByUserIdOrderByDateDesc(userId)
                 .stream()
                 .map(RosaryLog::getDate)
                 .toList();
@@ -107,12 +150,12 @@ public class RosaryLogService {
 
     public int getAmountOfPrayedRosaries(UUID userId) throws AccessDeniedException {
         User user = serviceHelper.getAuthenticatedUser();
+        User userToCount = serviceHelper.getUserByIdOrThrow(userId);
 
         if(!user.getRole().equals(Roles.ADMIN) && !user.getId().equals(userId)) {
             throw new AccessDeniedException("You cannot access another user's data.");
         }
 
-        List<RosaryLog> rosaries = rosaryLogRepository.findAllByUserIdAndCompletedTrue(userId);
-        return rosaries.size();
+        return rosaryLogRepository.countCompletedByUserId(userToCount.getId());
     }
 }

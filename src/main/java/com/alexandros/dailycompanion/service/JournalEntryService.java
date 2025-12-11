@@ -7,6 +7,7 @@
 package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.JournalEntryDto;
+import com.alexandros.dailycompanion.dto.JournalEntryLiteDto;
 import com.alexandros.dailycompanion.dto.JournalEntryRequest;
 import com.alexandros.dailycompanion.dto.JournalEntryUpdateRequest;
 import com.alexandros.dailycompanion.enums.AuditAction;
@@ -46,17 +47,17 @@ public class JournalEntryService {
         this.auditLogService = auditLogService;
     }
 
-    public Page<JournalEntryDto> getAllJournalEntriesForUser(int page, int size, String sort) {
+    public Page<JournalEntryLiteDto> getAllJournalEntriesForUser(int page, int size, String sort) {
         Sort.Direction direction = Sort.Direction.fromOptionalString(sort).orElse(Sort.Direction.DESC);
         Sort sortBy = Sort.by(direction, "updatedAt").and(Sort.by(direction, "createdAt"));
         Pageable pageable = PageRequest.of(page, size, sortBy);
 
         User user = serviceHelper.getAuthenticatedUser();
 
-        Page<JournalEntry> entries = journalEntryRepository.findAllByUserId(user.getId(), pageable);
+        Page<JournalEntryLiteDto> entries = journalEntryRepository.findAllLiteByUserId(user.getId(), pageable);
 
         logger.debug("Fetched {} journal entries for user {}", entries.getTotalElements(), user.getId());
-        return JournalEntryDtoMapper.toJournalEntryDto(entries);
+        return entries;
     }
 
     public List<JournalEntryDto> getAllJournalEntriesForUserNotPaged(UUID userId) throws AccessDeniedException {
@@ -172,7 +173,6 @@ public class JournalEntryService {
             throw new AccessDeniedException("You cannot access another user's journal entries.");
         }
 
-        List<JournalEntry> entries = journalEntryRepository.findAllByUserId(userId);
-        return entries.size();
+        return journalEntryRepository.countByUserId(userId);
     }
 }

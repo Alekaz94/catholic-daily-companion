@@ -7,6 +7,7 @@
 package com.alexandros.dailycompanion.service;
 
 import com.alexandros.dailycompanion.dto.SaintDto;
+import com.alexandros.dailycompanion.dto.SaintListDto;
 import com.alexandros.dailycompanion.dto.SaintRequest;
 import com.alexandros.dailycompanion.dto.SaintUpdateRequest;
 import com.alexandros.dailycompanion.mapper.SaintDtoMapper;
@@ -41,16 +42,17 @@ public class SaintService {
         this.auditLogService = auditLogService;
     }
 
-    public Page<SaintDto> getAllSaints(String query, int page, int size) {
+    public Page<SaintListDto> getAllSaintsList(String query, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
 
-        Page<Saint> saints;
+        Page<SaintListDto> saints;
         if (query == null || query.trim().isEmpty()) {
-            saints = saintRepository.findAll(pageable);
+            saints = saintRepository.findAllList(query, pageable);
         } else {
             saints = saintRepository.findByNameContainingIgnoreCase(query, pageable);
         }
-        return SaintDtoMapper.toSaintDto(saints);
+        System.out.println(saints);
+        return saints;
     }
 
     public SaintDto getSaint(UUID saintId) {
@@ -212,6 +214,24 @@ public class SaintService {
 
         return saints.stream()
                 .map(SaintDtoMapper::toSaintDto)
+                .toList();
+    }
+
+    public List<SaintListDto> getTodaysSaintList() {
+        MonthDay today = MonthDay.now();
+        List<Saint> saints = saintRepository.findAllByFeastDay(today);
+
+        if(saints.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return saints.stream()
+                .map(s -> new SaintListDto(
+                        s.getId(),
+                        s.getName(),
+                        s.getFeastDay(),
+                        s.getImageUrl()
+                ))
                 .toList();
     }
 

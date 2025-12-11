@@ -6,6 +6,7 @@
 
 package com.alexandros.dailycompanion.controller;
 
+import com.alexandros.dailycompanion.dto.PageResponse;
 import com.alexandros.dailycompanion.dto.RosaryLogDto;
 import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.service.RosaryLogService;
@@ -14,6 +15,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,9 +54,23 @@ public class RosaryLogController {
     }
 
     @GetMapping("/{userId}/history")
-    public ResponseEntity<List<RosaryLogDto>> getHistory(@PathVariable UUID userId) {
-        List<RosaryLogDto> logs = rosaryLogService.getHistory(userId);
-        return ResponseEntity.ok(logs);
+    public ResponseEntity<PageResponse<RosaryLogDto>> getHistory(@PathVariable UUID userId,
+                                                                 @RequestParam(defaultValue = "0") int page,
+                                                                 @RequestParam(defaultValue = "20") int size,
+                                                                 @RequestParam(defaultValue = "desc") String sort) {
+
+        Page<RosaryLogDto> logs = rosaryLogService.getHistory(userId, page, size, sort);
+
+        PageResponse<RosaryLogDto> response = new PageResponse<>(
+                logs.getContent(),
+                logs.getNumber(),
+                logs.getSize(),
+                logs.getTotalElements(),
+                logs.getTotalPages(),
+                logs.isLast()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{userId}/streak")

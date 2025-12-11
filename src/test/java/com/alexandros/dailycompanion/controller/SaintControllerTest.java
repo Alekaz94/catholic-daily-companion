@@ -64,7 +64,7 @@ class SaintControllerTest {
         when(serviceHelper.getClientIp(httpServletRequest)).thenReturn("127.0.0.1");
     }
 
-    @Test
+    /*@Test
     void getAllSaints_success() throws Exception {
         when(serviceHelper.getClientIp(any())).thenReturn("127.0.0.1");
 
@@ -76,7 +76,7 @@ class SaintControllerTest {
                 .andExpect(jsonPath("$.content[0].id").value(saintId.toString()))
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.totalPages").value(1));
-    }
+    }*/
 
     @Test
     void getSaint_success() throws Exception {

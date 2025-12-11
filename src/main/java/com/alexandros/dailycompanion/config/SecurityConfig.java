@@ -46,7 +46,7 @@ public class SecurityConfig {
                                 .requestMatchers("/privacy-policy.html").permitAll()
                                 .requestMatchers("/terms-of-service.html").permitAll()
                                 .requestMatchers("/images/**", "/css/**", "/js/**", "/webjars/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/saint/today").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/v1/saint/today/public").permitAll()
                                 .requestMatchers(HttpMethod.GET,"/api/v1/saint/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                                 .requestMatchers(HttpMethod.GET,"/api/v1/saint/feast/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                                 .requestMatchers(HttpMethod.GET,"/api/v1/saint/month/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
