@@ -6,7 +6,11 @@
 
 package com.alexandros.dailycompanion.config;
 
+import com.alexandros.dailycompanion.security.JwtAuthenticationEntryPoint;
 import com.alexandros.dailycompanion.security.JwtRequestFilter;
+import com.alexandros.dailycompanion.security.JwtUtil;
+import com.alexandros.dailycompanion.security.RateLimitFilter;
+import com.alexandros.dailycompanion.service.ServiceHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,30 +27,61 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Central security configuration for the application.
+ * <p>
+ * This configuration defines authentication and authorization rules,
+ * configures JWT-based stateless security, and restricts access to
+ * protected API endpoints based on user roles.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
-    private final JwtRequestFilter jwtRequestFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Autowired
-    public SecurityConfig(UserDetailsService userDetailsService, JwtRequestFilter jwtRequestFilter) {
+    public SecurityConfig(UserDetailsService userDetailsService, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
         this.userDetailsService = userDetailsService;
-        this.jwtRequestFilter = jwtRequestFilter;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
     }
 
+    /**
+     * Configures the HTTP security filter chain.
+     * <p>
+     * Defines:
+     * <ul>
+     *     <li>Public and protected endpoints</li>
+     *     <li>Role-based access control</li>
+     *     <li>JWT authentication filter integration</li>
+     *     <li>Stateless session management</li>
+     * </ul>
+     *
+     * @param http HTTP security configuration
+     * @return configured {@link SecurityFilterChain}
+     * @throws Exception if configuration fails
+     */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   JwtRequestFilter jwtRequestFilter,
+                                                   RateLimitFilter rateLimitFilter) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers("/api/v1/auth/**").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/v1/firebase-auth/firebase-login").permitAll()
-                                .requestMatchers("/privacy-policy.html").permitAll()
-                                .requestMatchers("/terms-of-service.html").permitAll()
-                                .requestMatchers("/images/**", "/css/**", "/js/**", "/webjars/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/saint/today/public").permitAll()
+                                .requestMatchers(
+                                        "/privacy-policy.html",
+                                        "/terms-of-service.html",
+                                        "/static/**",
+                                        "/images/**",
+                                        "/css/**",
+                                        "/js/**",
+                                        "/webjars/**"
+                                ).permitAll()
+                                .requestMatchers("/api/v1/app/version").permitAll()
                                 .requestMatchers(HttpMethod.GET,"/api/v1/saint/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                                 .requestMatchers(HttpMethod.GET,"/api/v1/saint/feast/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
                                 .requestMatchers(HttpMethod.GET,"/api/v1/saint/month/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_USER")
@@ -68,17 +103,43 @@ public class SecurityConfig {
                 )
                 .sessionManagement(sessions ->
                         sessions.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
+    /**
+     * Provides the authentication manager used by Spring Security.
+     *
+     * @param config authentication configuration
+     * @return authentication manager
+     * @throws Exception if initialization fails
+     */
     @Bean
     public AuthenticationManager authManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
+    /**
+     * Password encoder used for hashing and verifying user passwords.
+     * <p>
+     * Uses BCrypt for strong, adaptive hashing.
+     *
+     * @return password encoder
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
+
+    @Bean
+    public JwtRequestFilter jwtRequestFilter(JwtUtil jwtUtil) {
+        return new JwtRequestFilter(jwtUtil);
+    }
+
+    @Bean
+    public RateLimitFilter rateLimitFilter(JwtUtil jwtUtil, ServiceHelper serviceHelper) {
+        return new RateLimitFilter(jwtUtil, serviceHelper);
+    }
+
 }

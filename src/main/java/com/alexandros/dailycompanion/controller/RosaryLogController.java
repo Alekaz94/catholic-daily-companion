@@ -24,6 +24,12 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * REST controller responsible for tracking and retrieving Rosary completion data.
+ * <p>
+ * Supports daily completion tracking, streak calculation, and historical lookup
+ * for authenticated users.
+ */
 @RestController
 @RequestMapping("/api/v1/rosary")
 public class RosaryLogController {
@@ -38,6 +44,13 @@ public class RosaryLogController {
         this.serviceHelper = serviceHelper;
     }
 
+    /**
+     * Marks the Rosary as completed for the current day.
+     *
+     * @param userId  user identifier
+     * @param request HTTP request used to extract client IP
+     * @return created rosary log entry
+     */
     @PostMapping("/{userId}/complete")
     public ResponseEntity<RosaryLogDto> completeToday(@PathVariable UUID userId, HttpServletRequest request) {
         String ipAddress = serviceHelper.getClientIp(request);
@@ -47,12 +60,27 @@ public class RosaryLogController {
         return ResponseEntity.ok(rosaryLog);
     }
 
+    /**
+     * Checks whether the user has completed the Rosary today.
+     *
+     * @param userId user identifier
+     * @return {@code true} if completed today, otherwise {@code false}
+     */
     @PostMapping("/{userId}/completed-today")
     public ResponseEntity<Boolean> isCompletedToday(@PathVariable UUID userId) {
         boolean completed = rosaryLogService.isCompletedToday(userId);
         return ResponseEntity.ok(completed);
     }
 
+    /**
+     * Retrieves paginated Rosary completion history for a user.
+     *
+     * @param userId user identifier
+     * @param page   zero-based page index (default: 0)
+     * @param size   page size (default: 20)
+     * @param sort   sort direction ({@code asc} or {@code desc})
+     * @return paginated rosary history
+     */
     @GetMapping("/{userId}/history")
     public ResponseEntity<PageResponse<RosaryLogDto>> getHistory(@PathVariable UUID userId,
                                                                  @RequestParam(defaultValue = "0") int page,
@@ -73,12 +101,24 @@ public class RosaryLogController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves the current Rosary completion streak for a user.
+     *
+     * @param userId user identifier
+     * @return number of consecutive days completed
+     */
     @GetMapping("/{userId}/streak")
     public ResponseEntity<Integer> getStreak(@PathVariable UUID userId) {
         int streak = rosaryLogService.getStreak(userId);
         return ResponseEntity.ok(streak);
     }
 
+    /**
+     * Retrieves all dates on which the user completed the Rosary.
+     *
+     * @param userId user identifier
+     * @return list of ISO-8601 formatted dates
+     */
     @GetMapping("/{userId}/rosary-dates")
     public ResponseEntity<List<String>> getRosaryDates(@PathVariable UUID userId) {
         List<String> completedDates = rosaryLogService.getCompletedDates(userId)
@@ -88,6 +128,13 @@ public class RosaryLogController {
         return ResponseEntity.ok(completedDates);
     }
 
+    /**
+     * Checks whether the Rosary was completed on a specific date.
+     *
+     * @param userId user identifier
+     * @param date   date in {@code yyyy-MM-dd} format
+     * @return {@code true} if completed on the given date
+     */
     @GetMapping("/{userId}/completed-on/{date}")
     public ResponseEntity<Boolean> isCompletedOn(@PathVariable UUID userId, @PathVariable String date) {
         LocalDate localDate = LocalDate.parse(date);

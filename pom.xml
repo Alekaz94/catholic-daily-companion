@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.alexandros</groupId>
 	<artifactId>dailycompanion</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<name>Catholic Daily Companion</name>
 	<description>Backend service for Daily Catholic Companion app</description>
 
@@ -81,6 +81,12 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.bucket4j</groupId>
+			<artifactId>bucket4j-core</artifactId>
+			<version>8.10.0</version>
 		</dependency>
 
 		<dependency>

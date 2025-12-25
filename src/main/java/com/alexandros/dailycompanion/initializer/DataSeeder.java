@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.MonthDayDeserializer;
 import com.fasterxml.jackson.core.type.TypeReference;
-import jakarta.transaction.Transactional;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +20,12 @@ import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+/**
+ * Application data initializer responsible for seeding static reference data.
+ * <p>
+ * This component populates the database with predefined saints data
+ * from a bundled JSON resource on application startup if the database is empty.
+ */
 @Component
 public class DataSeeder {
 
@@ -30,7 +35,14 @@ public class DataSeeder {
         this.saintRepository = saintRepository;
     }
 
-    @Transactional
+    /**
+     * Seeds saint records into the database if no records currently exist.
+     * <p>
+     * Data is loaded from {@code data/saints.json} and converted into {@link Saint} entities.
+     * The operation is transactional to ensure atomic persistence.
+     *
+     * @throws RuntimeException if data loading or persistence fails
+     */
     public void seedSaintsIfEmpty() {
         if(saintRepository.count() > 0) {
             return;

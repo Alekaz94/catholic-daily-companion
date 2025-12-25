@@ -6,12 +6,7 @@
 
 package com.alexandros.dailycompanion;
 
-import com.alexandros.dailycompanion.enums.Roles;
 import com.alexandros.dailycompanion.initializer.DataSeeder;
-import com.alexandros.dailycompanion.model.User;
-import com.alexandros.dailycompanion.repository.UserRepository;
-import com.alexandros.dailycompanion.security.PasswordUtil;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

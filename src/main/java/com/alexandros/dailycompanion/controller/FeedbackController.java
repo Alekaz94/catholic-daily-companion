@@ -25,6 +25,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * REST controller responsible for handling user feedback.
+ * <p>
+ * Provides endpoints for:
+ * <ul>
+ *     <li>Submitting feedback from users</li>
+ *     <li>Retrieving feedback entries with pagination</li>
+ *     <li>Viewing individual feedback details</li>
+ *     <li>Updating feedback resolution status</li>
+ * </ul>
+ */
 @RestController
 @RequestMapping("/api/v1/feedback")
 public class FeedbackController {
@@ -38,6 +49,17 @@ public class FeedbackController {
         this.serviceHelper = serviceHelper;
     }
 
+    /**
+     * Submits new feedback to the system.
+     * <p>
+     * Feedback can be submitted by authenticated users or anonymously.
+     * Client IP address is recorded for moderation and analytics purposes.
+     *
+     * @param userId          optional user identifier from request header
+     * @param feedbackRequest feedback content and category
+     * @param request         HTTP servlet request used to extract client IP
+     * @return {@code 201 Created} if feedback is successfully submitted
+     */
     @PostMapping
     @Transactional
     public ResponseEntity<Void> submitFeedback(@RequestHeader(value = "user_id", required = false) UUID userId,
@@ -50,6 +72,16 @@ public class FeedbackController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    /**
+     * Retrieves a paginated list of all feedback entries.
+     * <p>
+     * Intended for administrative or moderation use.
+     *
+     * @param page zero-based page index (default: 0)
+     * @param size number of feedback items per page (default: 10)
+     * @param sort sort direction, either {@code asc} or {@code desc} (default: desc)
+     * @return paginated response containing feedback entries
+     */
     @GetMapping
     public ResponseEntity<PageResponse<FeedbackDto>> getAllFeedback(@RequestParam(defaultValue = "0") int page,
                                                                     @RequestParam(defaultValue = "10") int size,
@@ -67,12 +99,27 @@ public class FeedbackController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves details for a specific feedback entry.
+     *
+     * @param id unique identifier of the feedback entry
+     * @return feedback details
+     */
     @GetMapping("/{id}")
     public ResponseEntity<FeedbackDto> getSpecificFeedback(@PathVariable UUID id) {
         FeedbackDto feedbackDto = feedbackService.getSpecificFeedback(id);
         return ResponseEntity.ok(feedbackDto);
     }
 
+    /**
+     * Updates the resolution status of a feedback entry.
+     * <p>
+     * Typically used by administrators to mark feedback as fixed or unresolved.
+     *
+     * @param id                     unique identifier of the feedback entry
+     * @param feedbackUpdateRequest  request containing updated resolution status
+     * @return updated feedback details
+     */
     @PutMapping("/{id}")
     public ResponseEntity<FeedbackDto> updateIsFixed(@PathVariable UUID id, @RequestBody FeedbackUpdateRequest feedbackUpdateRequest) {
         FeedbackDto feedbackDto = feedbackService.updateIsFixed(id, feedbackUpdateRequest);

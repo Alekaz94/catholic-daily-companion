@@ -100,7 +100,7 @@ public class RosaryLogService {
         }
 
         int streak = 0;
-        LocalDate expected = LocalDate.now();
+        LocalDate expected = logs.get(0).getDate();
 
         for(RosaryLog log : logs) {
             if(log.getDate().isEqual(expected)) {

@@ -17,8 +17,13 @@ jwt.expiration=3600 # in seconds
 jwt.refreshExpiration=604800
 
 # Admin account for CommandLineRunner
+# Ensure that you initialize a admin user in command line runner
 admin.default.email=your-email@example.com
 admin.default.password=your-secure-password
+
+latest.version=to test add a version (eg 1.0.2)
+minimum.supported.version=this is <= latest version
+store.url=
 
 # CORS
 app.cors.allowed-origins=http://localhost:8081

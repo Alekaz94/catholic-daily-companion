@@ -27,6 +27,17 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * REST controller responsible for managing user journal entries.
+ * <p>
+ * Provides endpoints for:
+ * <ul>
+ *     <li>Creating journal entries by users</li>
+ *     <li>Retrieving journal entries with pagination</li>
+ *     <li>Viewing individual journal entry details</li>
+ *     <li>Updating journal entries</li>
+ * </ul>
+ */
 @RestController
 @RequestMapping("/api/v1/journal-entry")
 @Validated
@@ -41,6 +52,14 @@ public class JournalEntryController {
         this.serviceHelper = serviceHelper;
     }
 
+    /**
+     * Retrieves a paginated list of journal entries for the authenticated user.
+     *
+     * @param page zero-based page index (default: 0)
+     * @param size number of entries per page (default: 5)
+     * @param sort sort direction, either {@code asc} or {@code desc} (default: desc)
+     * @return paginated response containing journal entry summaries
+     */
     @GetMapping
     public ResponseEntity<PageResponse<JournalEntryLiteDto>> getAllJournalEntries(@RequestParam(defaultValue = "0") int page,
                                                                               @RequestParam(defaultValue = "5") int size,
@@ -59,12 +78,24 @@ public class JournalEntryController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves a specific journal entry by its unique identifier.
+     *
+     * @param entryId unique identifier of the journal entry
+     * @return full journal entry details
+     * @throws AccessDeniedException if the entry does not belong to the user
+     */
     @GetMapping("/{entryId}")
     public ResponseEntity<JournalEntryDto> getEntryById(@PathVariable UUID entryId) throws AccessDeniedException {
         JournalEntryDto entry = journalEntryService.getEntryById(entryId);
         return ResponseEntity.ok(entry);
     }
 
+    /**
+     * Retrieves all dates on which the user has journal entries.
+     *
+     * @return list of ISO-8601 formatted dates (yyyy-MM-dd)
+     */
     @GetMapping("/dates")
     public ResponseEntity<List<String>> getJournalEntryDates() {
         List<String> dates = journalEntryService.getEntryDates()
@@ -74,6 +105,12 @@ public class JournalEntryController {
         return ResponseEntity.ok(dates);
     }
 
+    /**
+     * Retrieves journal entries for a specific date.
+     *
+     * @param date date in {@code yyyy-MM-dd} format
+     * @return list of journal entries for the given date
+     */
     @GetMapping("/dates/{date}")
     public ResponseEntity<?> getEntryByDate(@PathVariable String date) {
         try {
@@ -85,6 +122,13 @@ public class JournalEntryController {
         }
     }
 
+    /**
+     * Creates a new journal entry for the authenticated user.
+     *
+     * @param entryRequest   journal entry creation request
+     * @param servletRequest HTTP servlet request used to extract client IP
+     * @return created journal entry
+     */
     @PostMapping
     public ResponseEntity<JournalEntryDto> createJournalEntry(@Valid @RequestBody JournalEntryRequest entryRequest,
                                                               HttpServletRequest servletRequest) {
@@ -96,6 +140,15 @@ public class JournalEntryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(entry);
     }
 
+    /**
+     * Updates an existing journal entry.
+     *
+     * @param entryId            unique identifier of the journal entry
+     * @param entryUpdateRequest updated journal entry data
+     * @param servletRequest     HTTP servlet request used to extract client IP
+     * @return updated journal entry
+     * @throws AccessDeniedException if the entry does not belong to the user
+     */
     @PutMapping("/{entryId}")
     public ResponseEntity<JournalEntryDto> updateJournalEntry(@PathVariable UUID entryId,
                                                           @Valid @RequestBody JournalEntryUpdateRequest entryUpdateRequest,
@@ -108,6 +161,14 @@ public class JournalEntryController {
         return ResponseEntity.ok(updatedEntry);
     }
 
+    /**
+     * Deletes an existing journal entry.
+     *
+     * @param entryId            unique identifier of the journal entry
+     * @param servletRequest     HTTP servlet request used to extract client IP
+     * @return {@code 204 No Content} on successful deletion
+     * @throws AccessDeniedException if the entry does not belong to the user
+     */
     @DeleteMapping("/{entryId}")
     public ResponseEntity<Void> deleteJournalEntry(@PathVariable UUID entryId,
                                                    HttpServletRequest servletRequest) throws AccessDeniedException {

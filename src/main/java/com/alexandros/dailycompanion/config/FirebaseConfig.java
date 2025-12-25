@@ -16,6 +16,14 @@ import javax.annotation.PostConstruct;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Configuration class responsible for initializing Firebase services.
+ * <p>
+ * This configuration reads Firebase service account credentials from
+ * environment variables and initializes the Firebase SDK at application
+ * startup. It enables Firebase-based authentication (e.g. Google Sign-In)
+ * and other Firebase features used by the application.
+ */
 @Configuration
 public class FirebaseConfig {
 
@@ -25,6 +33,16 @@ public class FirebaseConfig {
         this.env = env;
     }
 
+    /**
+     * Initializes the Firebase application using service account credentials.
+     * <p>
+     * The credentials are expected to be provided via the
+     * {@code FIREBASE_CREDENTIALS} environment variable in JSON format.
+     * Line breaks are restored at runtime to support secure deployment.
+     *
+     * @throws IOException if credential parsing fails
+     * @throws IllegalStateException if credentials are missing or invalid
+     */
     @PostConstruct
     public void initFirebase() throws IOException {
         String firebaseCredentials = env.getProperty("FIREBASE_CREDENTIALS");

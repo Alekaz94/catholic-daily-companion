@@ -35,6 +35,18 @@ import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+/**
+ * REST controller responsible for exporting user-related data.
+ * <p>
+ * This controller allows authenticated users to export their personal data
+ * in compliance with data protection regulations (e.g. GDPR).
+ * <ul>
+ *     <li>Exports user data in JSON format</li>
+ *     <li>Exports user data as a ZIP archive containing JSON and CSV files</li>
+ *     <li>Includes related entities such as journal entries, rosary logs, and audit logs</li>
+ * </ul>
+ * The exported data is intended for personal use, portability, and transparency.
+ */
 @RestController
 @RequestMapping("/api/v1/user")
 public class UserExportController {
@@ -54,6 +66,17 @@ public class UserExportController {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Exports all personal data associated with a user in JSON format.
+     * <p>
+     * The export includes user information, rosary history, journal entries,
+     * audit logs, and metadata for portability and transparency.
+     *
+     * @param userId identifier of the user whose data is being exported
+     * @return JSON file containing the exported user data
+     * @throws AccessDeniedException if the requesting user is not authorized
+     * @throws JsonProcessingException if serialization fails
+     */
     @GetMapping("/export-data/{userId}")
     public ResponseEntity<byte[]> exportUserData(@PathVariable UUID userId) throws AccessDeniedException, JsonProcessingException {
         // Authorization handled by userService.getUser()
@@ -83,6 +106,22 @@ public class UserExportController {
                 .body(data);
     }
 
+    /**
+     * Exports all personal data associated with a user as a ZIP archive.
+     * <p>
+     * The ZIP file contains multiple files (JSON and CSV) including:
+     * <ul>
+     *     <li>User profile data</li>
+     *     <li>Rosary completion history</li>
+     *     <li>Journal entries</li>
+     *     <li>Audit logs</li>
+     *     <li>Export metadata</li>
+     * </ul>
+     *
+     * @param userId identifier of the user whose data is being exported
+     * @return ZIP archive containing the exported user data
+     * @throws IOException if ZIP creation fails
+     */
     @GetMapping("/export-data-zip/{userId}")
     public ResponseEntity<byte[]> exportUserDataAsZip(@PathVariable UUID userId) throws IOException {
         // Authorization handled by userService.getUser()
@@ -132,6 +171,12 @@ public class UserExportController {
                 .body(zipData);
     }
 
+    /**
+     * Converts rosary log data to CSV format.
+     *
+     * @param logs list of rosary log entries
+     * @return CSV-formatted string
+     */
     private String convertRosaryToCsv(List<RosaryLogDto> logs) {
         StringBuilder sb = new StringBuilder("date,completed\n");
         for(RosaryLogDto log : logs) {
@@ -140,6 +185,12 @@ public class UserExportController {
         return sb.toString();
     }
 
+    /**
+     * Converts journal entry data to CSV format.
+     *
+     * @param entries list of journal entries
+     * @return CSV-formatted string
+     */
     private String convertJournalToCsv(List<JournalEntryDto> entries) {
         StringBuilder sb = new StringBuilder("createdAt,updatedAt,title,content\n");
         for(JournalEntryDto entry : entries) {
@@ -151,6 +202,12 @@ public class UserExportController {
         return sb.toString();
     }
 
+    /**
+     * Converts audit log data to CSV format.
+     *
+     * @param logs list of audit log entries
+     * @return CSV-formatted string
+     */
     private String convertAuditLogsToCsv(List<AuditLogExportDto> logs) {
         StringBuilder sb = new StringBuilder("id,userId,action,entityType,entityId,metadata,ipAddress,createdAt\n");
 
@@ -168,6 +225,12 @@ public class UserExportController {
         return sb.toString();
     }
 
+    /**
+     * Escapes text values for safe inclusion in CSV output.
+     *
+     * @param text raw text value
+     * @return escaped CSV-safe text
+     */
     private String escapeCsv(String text) {
         if(text == null) {
             return "";

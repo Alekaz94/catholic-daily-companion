@@ -227,7 +227,7 @@ public class UserService implements UserDetailsService {
             throw new AccessDeniedException("You are not allowed to this user's information");
         }
 
-        refreshTokenService.deleteAllByUserId(userId);
+        refreshTokenService.deleteByEmail(currentUser.getEmail());
         journalEntryRepository.deleteAllByUserId(userId);
         rosaryLogRepository.deleteAllByUserId(userId);
 
@@ -255,7 +255,7 @@ public class UserService implements UserDetailsService {
 
         UserDto userDto = UserDtoMapper.toUserDto(user);
         String token = jwtUtil.generateToken(userDto);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getEmail());
         return new LoginResponse(userDto, token, refreshToken.getToken());
     }
 

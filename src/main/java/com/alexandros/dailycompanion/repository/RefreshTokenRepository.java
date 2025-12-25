@@ -7,18 +7,16 @@
 package com.alexandros.dailycompanion.repository;
 
 import com.alexandros.dailycompanion.model.RefreshToken;
-import com.alexandros.dailycompanion.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
     Optional<RefreshToken> findByToken(String token);
-
-    Optional<RefreshToken> findByUser(User user);
-
-    int deleteByUserId(UUID id);
+    void deleteByEmail(String email);
+    void deleteByToken(String token);
+    void deleteAllByExpiryDateBefore(Instant instant);
 }

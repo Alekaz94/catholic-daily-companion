@@ -23,6 +23,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+/**
+ * REST controller responsible for Firebase-based authentication.
+ * <p>
+ * This controller handles login requests using Firebase Authentication
+ * ID tokens (e.g., Google Sign-In) and exchanges them for
+ * application-specific authentication tokens.
+ */
 @RestController
 @RequestMapping("/api/v1/firebase-auth")
 public class FirebaseAuthController {
@@ -36,6 +43,16 @@ public class FirebaseAuthController {
         this.serviceHelper = serviceHelper;
     }
 
+    /**
+     * Authenticates a user using a Firebase ID token.
+     * <p>
+     * The provided Firebase ID token is verified and, if valid,
+     * exchanged for an application-specific authentication response.
+     *
+     * @param body    request body containing the Firebase {@code idToken}
+     * @param request HTTP servlet request used to extract client IP address
+     * @return login response on success, or appropriate HTTP error status
+     */
     @PostMapping("/firebase-login")
     public ResponseEntity<LoginResponse> firebaseLogin(@RequestBody Map<String, String> body, HttpServletRequest request) {
         String ipAddress = serviceHelper.getClientIp(request);

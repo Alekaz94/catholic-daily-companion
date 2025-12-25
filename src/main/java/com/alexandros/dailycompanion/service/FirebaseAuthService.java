@@ -20,6 +20,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,15 +34,16 @@ import java.util.UUID;
 public class FirebaseAuthService {
     private final static Logger logger = LoggerFactory.getLogger(FirebaseAuthService.class);
 
-    private final Environment env;
     private final FirebaseAuth firebaseAuth;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final AuditLogService auditLogService;
 
-    public FirebaseAuthService(Environment env, UserRepository userRepository, JwtUtil jwtUtil, RefreshTokenService refreshTokenService, AuditLogService auditLogService) {
-        this.env = env;
+    @Value("${admin.email}")
+    private String adminEmail;
+
+    public FirebaseAuthService(UserRepository userRepository, JwtUtil jwtUtil, RefreshTokenService refreshTokenService, AuditLogService auditLogService) {
         this.refreshTokenService = refreshTokenService;
         this.auditLogService = auditLogService;
         this.firebaseAuth = FirebaseAuth.getInstance();
@@ -51,7 +53,6 @@ public class FirebaseAuthService {
 
     @Transactional
     public UserCreationResult createOrGetUser(String email, String firstName, String ipAddress) {
-        String adminEmail = env.getProperty("ADMIN_EMAIL");
         Optional<User> existingUser = userRepository.findByEmail(email);
 
         if (existingUser.isPresent()) {
@@ -112,7 +113,9 @@ public class FirebaseAuthService {
 
         UserDto userDto = UserDtoMapper.toUserDto(user);
         String token = jwtUtil.generateToken(userDto);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getEmail());
+        logger.info("Refresh token received: {}", refreshToken.getToken());
+
         return new LoginResponse(userDto, token, refreshToken.getToken());
     }
 }

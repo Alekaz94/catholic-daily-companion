@@ -15,7 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -26,7 +29,7 @@ public class RefreshTokenService {
     private static final Logger logger = LoggerFactory.getLogger(RefreshTokenService.class);
 
     @Value("${jwt.refreshExpiration}")
-    private Long refreshExpirationSeconds;
+    private Long refreshTokenDuration;
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
@@ -35,42 +38,61 @@ public class RefreshTokenService {
     @Autowired
     private ServiceHelper serviceHelper;
 
-    @Transactional
-    public RefreshToken createRefreshToken(User user) {
-        user = userRepository.findByIdForUpdate(user.getId())
-                .orElseThrow(() -> new IllegalStateException("User not found!"));
+    public RefreshToken createRefreshToken(String email) {
+        User user = serviceHelper.getUserByEmail(email);
+        refreshTokenRepository.deleteByEmail(email);
 
-        Optional<RefreshToken> existingToken = refreshTokenRepository.findByUser(user);
-
-        RefreshToken refreshToken = existingToken.orElse(new RefreshToken());
-        refreshToken.setUser(user);
-        refreshToken.setToken(UUID.randomUUID().toString());
-        refreshToken.setExpiryDate(Instant.now().plusSeconds(refreshExpirationSeconds));
-
-        RefreshToken saved = refreshTokenRepository.save(refreshToken);
+        RefreshToken token = new RefreshToken();
+        token.setEmail(email);
+        token.setToken(UUID.randomUUID().toString());
+        token.setExpiryDate(Instant.now().plusSeconds(refreshTokenDuration));
 
         logger.info("Created refresh token for userId={}", user.getId());
-        return saved;
+        return refreshTokenRepository.save(token);
     }
 
-    public void verifyExpiration(RefreshToken token) {
-        if(token.getExpiryDate().isBefore(Instant.now())) {
-            logger.warn("Expired refresh token detected for userId={}", token.getUser().getId());
-            throw new RuntimeException("Refresh token was expired. Please login again.");
+    public Optional<RefreshToken> findValidToken(String token) {
+        Optional<RefreshToken> found = refreshTokenRepository.findByToken(token);
+
+        if (found.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Refresh token already used"
+            );
         }
+
+        return found.filter(t -> t.getExpiryDate().isAfter(Instant.now()));
     }
 
-    public int deleteAllByUserId(UUID userId) {
-        logger.info("Deleted all refresh tokens for userId={}", userId);
-        return refreshTokenRepository.deleteByUserId(userId);
+    @Transactional
+    public RefreshToken rotateRefreshToken(RefreshToken existing) {
+        refreshTokenRepository.deleteByToken(existing.getToken());
+
+        RefreshToken newToken = new RefreshToken();
+        newToken.setEmail(existing.getEmail());
+        newToken.setToken(UUID.randomUUID().toString());
+        newToken.setExpiryDate(Instant.now().plusSeconds(refreshTokenDuration));
+
+        return refreshTokenRepository.save(newToken);
     }
 
-    public Optional<RefreshToken> findByToken(String token) {
-        return refreshTokenRepository.findByToken(token);
+    public String getEmailFromToken(String token) {
+        return refreshTokenRepository.findByToken(token)
+                .map(RefreshToken::getEmail)
+                .orElse(null);
     }
 
-    public void deleteRefreshToken(RefreshToken refreshToken) {
-        logger.info("Deleted refresh token for userId={}", refreshToken.getUser().getId());
-        refreshTokenRepository.delete(refreshToken);
+    @Scheduled(fixedRate = 60 * 60 * 1000)
+    public void cleanupExpiredTokens() {
+        refreshTokenRepository.deleteAllByExpiryDateBefore(Instant.now());
+    }
+
+    public void deleteByEmail(String email) {
+        refreshTokenRepository.deleteByEmail(email);
+    }
+
+    @Transactional
+    public void deleteByToken(String token) {
+        refreshTokenRepository.deleteByToken(token);
     }
 }
