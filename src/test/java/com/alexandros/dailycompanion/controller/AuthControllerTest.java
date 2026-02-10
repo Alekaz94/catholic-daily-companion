@@ -72,7 +72,7 @@ class AuthControllerTest {
 
         refreshToken = new RefreshToken();
         refreshToken.setToken("refresh-token");
-        refreshToken.setUserId(user.getId().toString());
+        refreshToken.setUserId(user.getId());
     }
 
     @Test
@@ -150,7 +150,7 @@ class AuthControllerTest {
     void refreshToken_success() throws Exception {
         RefreshToken newRefreshToken = new RefreshToken();
         newRefreshToken.setToken("refresh-token");
-        newRefreshToken.setUserId(user.getId().toString());
+        newRefreshToken.setUserId(user.getId());
 
         when(refreshTokenService.findValidToken("refresh-token")).thenReturn(Optional.of(refreshToken));
         when(refreshTokenService.createRefreshToken(any())).thenReturn(newRefreshToken);

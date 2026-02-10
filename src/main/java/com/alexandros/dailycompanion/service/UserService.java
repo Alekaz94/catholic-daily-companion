@@ -227,7 +227,7 @@ public class UserService implements UserDetailsService {
             throw new AccessDeniedException("You are not allowed to this user's information");
         }
 
-        refreshTokenService.deleteByEmail(currentUser.getEmail());
+        refreshTokenService.deleteByUserId(currentUser.getId());
         journalEntryRepository.deleteAllByUserId(userId);
         rosaryLogRepository.deleteAllByUserId(userId);
 
