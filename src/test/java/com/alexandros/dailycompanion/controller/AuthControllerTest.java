@@ -72,7 +72,7 @@ class AuthControllerTest {
 
         refreshToken = new RefreshToken();
         refreshToken.setToken("refresh-token");
-        refreshToken.setUser(user);
+        refreshToken.setEmail(user.getEmail());
     }
 
     @Test
@@ -150,9 +150,9 @@ class AuthControllerTest {
     void refreshToken_success() throws Exception {
         RefreshToken newRefreshToken = new RefreshToken();
         newRefreshToken.setToken("refresh-token");
-        newRefreshToken.setUser(user);
+        newRefreshToken.setEmail(user.getEmail());
 
-        when(refreshTokenService.findByToken("refresh-token")).thenReturn(Optional.of(refreshToken));
+        when(refreshTokenService.findValidToken("refresh-token")).thenReturn(Optional.of(refreshToken));
         when(refreshTokenService.createRefreshToken(any())).thenReturn(newRefreshToken);
         when(jwtUtil.generateToken(any())).thenReturn("new-access-token");
 
@@ -167,7 +167,7 @@ class AuthControllerTest {
     @Test
     void refreshToken_invalid() throws Exception {
         when(serviceHelper.getClientIp(any())).thenReturn("127.0.0.1");
-        when(refreshTokenService.findByToken("invalid")).thenReturn(Optional.empty());
+        when(refreshTokenService.findValidToken("invalid")).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/v1/auth/refresh-token")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -178,7 +178,7 @@ class AuthControllerTest {
 
     @Test
     void refreshToken_missing_shouldReturn401() throws Exception {
-        when(refreshTokenService.findByToken("invalid")).thenReturn(Optional.empty());
+        when(refreshTokenService.findValidToken("invalid")).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/api/v1/auth/refresh-token")
                         .contentType(MediaType.APPLICATION_JSON)
