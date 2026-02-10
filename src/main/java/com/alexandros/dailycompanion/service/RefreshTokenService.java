@@ -43,7 +43,7 @@ public class RefreshTokenService {
         refreshTokenRepository.deleteByEmail(email);
 
         RefreshToken token = new RefreshToken();
-        token.setEmail(email);
+        token.setUserId(user.getId().toString());
         token.setToken(UUID.randomUUID().toString());
         token.setExpiryDate(Instant.now().plusSeconds(refreshTokenDuration));
 
@@ -69,7 +69,7 @@ public class RefreshTokenService {
         refreshTokenRepository.deleteByToken(existing.getToken());
 
         RefreshToken newToken = new RefreshToken();
-        newToken.setEmail(existing.getEmail());
+        newToken.setUserId(existing.getUserId());
         newToken.setToken(UUID.randomUUID().toString());
         newToken.setExpiryDate(Instant.now().plusSeconds(refreshTokenDuration));
 
@@ -78,7 +78,7 @@ public class RefreshTokenService {
 
     public String getEmailFromToken(String token) {
         return refreshTokenRepository.findByToken(token)
-                .map(RefreshToken::getEmail)
+                .map(RefreshToken::getUserId)
                 .orElse(null);
     }
 
