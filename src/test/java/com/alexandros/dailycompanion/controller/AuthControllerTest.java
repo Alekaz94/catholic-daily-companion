@@ -72,7 +72,7 @@ class AuthControllerTest {
 
         refreshToken = new RefreshToken();
         refreshToken.setToken("refresh-token");
-        refreshToken.setEmail(user.getEmail());
+        refreshToken.setUserId(user.getId().toString());
     }
 
     @Test
