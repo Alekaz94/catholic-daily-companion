@@ -126,7 +126,7 @@ public class AuthController {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED, "Refresh token expired"
                 ));
-        User user = serviceHelper.getUserByEmail(existing.getEmail());
+        User user = serviceHelper.getUserByEmail(existing.getUserId());
 
         String newAccessToken = jwtUtil.generateToken(UserDtoMapper.toUserDto(user));
         RefreshToken newRefreshToken =
