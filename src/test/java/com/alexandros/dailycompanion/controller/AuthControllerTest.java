@@ -150,7 +150,7 @@ class AuthControllerTest {
     void refreshToken_success() throws Exception {
         RefreshToken newRefreshToken = new RefreshToken();
         newRefreshToken.setToken("refresh-token");
-        newRefreshToken.setEmail(user.getEmail());
+        newRefreshToken.setUserId(user.getId().toString());
 
         when(refreshTokenService.findValidToken("refresh-token")).thenReturn(Optional.of(refreshToken));
         when(refreshTokenService.createRefreshToken(any())).thenReturn(newRefreshToken);
