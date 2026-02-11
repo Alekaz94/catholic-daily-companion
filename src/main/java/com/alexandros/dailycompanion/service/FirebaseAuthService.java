@@ -113,7 +113,7 @@ public class FirebaseAuthService {
 
         UserDto userDto = UserDtoMapper.toUserDto(user);
         String token = jwtUtil.generateToken(userDto);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getEmail());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
         logger.info("Refresh token received: {}", refreshToken.getId());
 
         return new LoginResponse(userDto, token, refreshToken.getToken());

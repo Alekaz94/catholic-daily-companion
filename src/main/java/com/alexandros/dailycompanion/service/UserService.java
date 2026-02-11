@@ -255,7 +255,7 @@ public class UserService implements UserDetailsService {
 
         UserDto userDto = UserDtoMapper.toUserDto(user);
         String token = jwtUtil.generateToken(userDto);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getEmail());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
         return new LoginResponse(userDto, token, refreshToken.getToken());
     }
 

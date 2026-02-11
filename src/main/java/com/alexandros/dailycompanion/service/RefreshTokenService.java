@@ -6,6 +6,7 @@
 
 package com.alexandros.dailycompanion.service;
 
+import com.alexandros.dailycompanion.dto.UserDto;
 import com.alexandros.dailycompanion.model.RefreshToken;
 import com.alexandros.dailycompanion.model.User;
 import com.alexandros.dailycompanion.repository.RefreshTokenRepository;
@@ -38,9 +39,20 @@ public class RefreshTokenService {
     @Autowired
     private ServiceHelper serviceHelper;
 
-    public RefreshToken createRefreshToken(String email) {
-        User user = serviceHelper.getUserByEmail(email);
-        refreshTokenRepository.deleteByUserId(user.getId());
+    public RefreshToken createRefreshToken(User user) {
+        Optional<RefreshToken> existing =
+                refreshTokenRepository.findByUserId(user.getId());
+
+        if (existing.isPresent()) {
+            RefreshToken token = existing.get();
+            token.setToken(UUID.randomUUID().toString());
+            token.setExpiryDate(
+                    Instant.now().plusSeconds(refreshTokenDuration)
+            );
+
+            logger.info("Updated refresh token for userId={}", user.getId());
+            return refreshTokenRepository.save(token);
+        }
 
         RefreshToken token = new RefreshToken();
         token.setUserId(user.getId());
@@ -57,7 +69,7 @@ public class RefreshTokenService {
         if (found.isEmpty()) {
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
-                    "Refresh token already used"
+                    "Invalid refresh token"
             );
         }
 
@@ -66,23 +78,19 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken rotateRefreshToken(RefreshToken existing) {
-        refreshTokenRepository.deleteByToken(existing.getToken());
-
-        RefreshToken newToken = new RefreshToken();
-        newToken.setUserId(existing.getUserId());
-        newToken.setToken(UUID.randomUUID().toString());
-        newToken.setExpiryDate(Instant.now().plusSeconds(refreshTokenDuration));
-
-        return refreshTokenRepository.save(newToken);
+        existing.setToken(UUID.randomUUID().toString());
+        existing.setExpiryDate(Instant.now().plusSeconds(refreshTokenDuration));
+        return refreshTokenRepository.save(existing);
     }
 
-    public String getUserIdFromToken(String token) {
+    public UUID getUserIdFromToken(String token) {
         return refreshTokenRepository.findByToken(token)
-                .map(rt -> rt.getUserId().toString())
+                .map(RefreshToken::getUserId)
                 .orElse(null);
     }
 
     @Scheduled(fixedRate = 60 * 60 * 1000)
+    @Transactional
     public void cleanupExpiredTokens() {
         refreshTokenRepository.deleteAllByExpiryDateBefore(Instant.now());
     }
