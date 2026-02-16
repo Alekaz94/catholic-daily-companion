@@ -1,25 +1,23 @@
-# ✨ Catholic Daily Companion – Backend
+# Catholic Daily Companion – Backend
 
 Backend service for the **Catholic Daily Companion** mobile app (React Native + Expo).  
 Provides user authentication, rosary streak tracking, daily readings, profile editing, and secure session management.
 
 ---
 
-## 📌 Features
+## Features
 
-- 🔐 JWT Authentication
-- 🔄 Refresh Token Support
-- 🔥 Firebase Identity Integration
-- 🙋‍♂️ User system (registration, profile, updates)
-- 📖 Daily spiritual content API
-- 🛡 Spring Security 6
-- 🗂 PostgreSQL Database
-- 🌐 CORS configuration
-- 🧩 Modular service architecture
+-  JWT Authentication
+-  Refresh Token Support
+-  Firebase Identity Integration
+- ‍️ User system (registration, profile, updates)
+-  Daily spiritual content API
+-  Spring Security 6
+-  PostgreSQL Database
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Category       | Technology                    |
 |----------------|-------------------------------|
@@ -27,12 +25,11 @@ Provides user authentication, rosary streak tracking, daily readings, profile ed
 | Framework      | Spring Boot 3.5.x             |
 | Security       | Spring Security 6, JWT (jjwt) |
 | Database       | PostgreSQL                    |
-| Authentication | Firebase Admin SDK            |
 | Build Tool     | Maven                         |
 
 ---
 
-## 🚀 Getting Started (Local Development)
+## Getting Started (Local Development)
 
 ### 1️⃣ Clone the repository
 ```bash
@@ -44,21 +41,21 @@ cd dailycompanion
 
 Inside src/main/resources/, 
 
-create application.properties (LOCAL DEVELOPMENT ONLY — not committed to Git)
+create application.properties
 
 ```bash
 spring.application.name=Catholic Daily Companion
 
 # Local PostgreSQL
 spring.datasource.url=jdbc:postgresql://localhost:5432/catholic-daily-companion
-spring.datasource.username=postgres
-spring.datasource.password=yourpassword
+spring.datasource.username=<postgres>
+spring.datasource.password=<yourpassword>
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 
 # JWT
-jwt.secret=local-secret-key
+jwt.secret=<local-secret-key>
 jwt.accessExpiration=3600
 jwt.refreshExpiration=604800
 
@@ -71,30 +68,43 @@ app.cors.allowed-origins=http://localhost:8081,http://192.168.0.101:8081
 
 server.port=8080
 ```
-
-⚠️ Never commit real secrets or production credentials.
-
-3️⃣ Install Dependencies
-
+Add the code below to class CatholicDailyCompanionApplication to initialize an admin user.
 ```bash
-./mvnw clean install
+@Bean
+	@Order(1)
+	CommandLineRunner initUsers(UserRepository userRepository,
+								@Value("${admin.default.email}") String adminEmail,
+								@Value("${admin.default.password:changeMe123}") String adminPassword) {
+		return args -> {
+			if (userRepository.findByEmail(adminEmail).isEmpty()) {
+				User adminUser = new User();
+				adminUser.setFirstName("Admin");
+				adminUser.setLastName("User");
+				adminUser.setEmail(adminEmail);
+				adminUser.setPassword(PasswordUtil.hashPassword(adminPassword));
+				adminUser.setRole(Roles.ADMIN);
+				userRepository.save(adminUser);
+				System.out.println("Admin user created: " + adminEmail);
+			} else {
+				System.out.println("Admin user already exists: " + adminEmail);
+			}
+		};
+	}
 ```
-4️⃣ Run the Backend
-```bash
-./mvnw spring-boot:run
-```
+
+3️⃣ Run the backend
+
 The backend will run at:
-
-👉 http://localhost:8080
+ http://localhost:8080
 
 ---
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
 
 ---
 
-## ❤️ Author
+## Author
 
 Created by Alexandros Kazalis
 
